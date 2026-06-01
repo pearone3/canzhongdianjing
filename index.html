@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>喰种电竞 · 委托布告栏</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #eef;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .toolbar {
+            backdrop-filter: blur(12px);
+            background: rgba(30, 36, 59, 0.6);
+            border-radius: 80px;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+        }
+        .btn {
+            background: linear-gradient(135deg, #ff6a00, #ff3a00);
+            border: none;
+            padding: 8px 22px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-outline { background: transparent; border: 1px solid #ff8c42; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .admin-panel {
+            backdrop-filter: blur(16px);
+            background: rgba(20, 24, 45, 0.85);
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 140, 0, 0.4);
+            display: none;
+        }
+        .admin-tabs { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .admin-tab {
+            background: rgba(42, 46, 72, 0.7);
+            padding: 10px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .admin-tab.active { background: #ff6a00; color: white; box-shadow: 0 0 12px #ff6a00; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .form-group { flex: 1; min-width: 140px; }
+        label { font-size: 0.75rem; color: #ccd; display: block; margin-bottom: 5px; }
+        input, select, textarea {
+            background: #0b0e1a;
+            border: 1px solid #ff8c42;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 28px;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #2a2e48; }
+        th { color: #ffb347; background: #13172b; }
+        .actions button {
+            background: #2a2e48;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 30px;
+            margin: 0 5px;
+            cursor: pointer;
+            color: white;
+        }
+        .games-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .game-card {
+            background: rgba(20, 24, 40, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            padding: 30px 25px;
+            width: 240px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid rgba(255, 100, 0, 0.3);
+        }
+        .game-card:hover { transform: translateY(-12px); border-color: #ff8c42; box-shadow: 0 25px 40px rgba(255,100,0,0.3); }
+        .players-list { display: flex; flex-direction: column; gap: 20px; }
+        .player-card {
+            background: linear-gradient(135deg, #151e2c, #1a2335);
+            border-radius: 32px;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            border: 1px solid rgba(255,140,0,0.4);
+            transition: 0.25s;
+        }
+        .player-card:hover { transform: scale(1.01); border-color: #ffaa55; }
+        .player-icon {
+            width: 100px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            font-size: 3rem;
+        }
+        .info { flex: 1; padding: 18px; }
+        .nickname {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #ffdfa5;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .type-badge {
+            background: #ff8c42;
+            color: #1a1f2e;
+            padding: 5px 18px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .prices { display: flex; gap: 20px; margin: 8px 0; }
+        .price-tag {
+            background: #2a3452;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: #ffdd99;
+        }
+        .honor-list, .skill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .honor-tag, .skill-tag {
+            background: #2a3452;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            color: #ffdd99;
+        }
+        .filter-bar {
+            background: rgba(19, 23, 43, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 15px 25px;
+            border-radius: 80px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1e233c;
+            padding: 5px 24px;
+            border-radius: 60px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            width: 90%;
+            max-width: 1200px;
+            height: 85%;
+            background: #6b4c3b;
+            border-radius: 40px;
+            position: relative;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            background-blend-mode: overlay;
+        }
+        .tasks-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 400px;
+            position: relative;
+        }
+        .task-card {
+            background: #fdf8e7;
+            color: #3e2a1f;
+            width: 260px;
+            padding: 16px;
+            border-radius: 24px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            cursor: grab;
+            transition: 0.1s;
+            border: 1px solid #d4b48c;
+        }
+        .task-card:active { cursor: grabbing; }
+        .task-card h3 { font-size: 1.2rem; margin-bottom: 8px; border-left: 4px solid #ff8c42; padding-left: 8px; }
+        .admin-tag { background: #ff8c42; color: #1a1f2e; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin-left: 10px; }
+        @media (max-width: 700px) {
+            .player-card { flex-direction: column; }
+            .player-icon { width: 100%; padding: 20px 0; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="container">
+    <div class="toolbar">
+        <div style="font-weight: bold; font-size: 1.6rem;">🍽️ 喰种电竞</div>
+        <div>
+            <button id="openBulletinBtn" class="btn" style="background:#2a5f7a;">📜 喰种委托布告栏</button>
+            <button id="shopOwnerBtn" class="btn">👑 店长模式</button>
+        </div>
+    </div>
+
+    <div id="adminPanel" class="admin-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>🛠️ 店长控制台</h2>
+            <button id="backToClientBtn" class="btn-outline btn">← 返回</button>
+        </div>
+        <div class="admin-tabs">
+            <div class="admin-tab active" data-tab="games">🎮 游戏管理</div>
+            <div class="admin-tab" data-tab="players">👥 陪玩管理</div>
+            <div class="admin-tab" data-tab="filters">🔍 筛选器配置</div>
+            <div class="admin-tab" data-tab="tasks">📋 委托管理</div>
+        </div>
+        <div id="tabGames" class="tab-content active">
+            <div class="form-row">
+                <div class="form-group"><label>游戏ID</label><input type="text" id="gameId" placeholder="例: apex"></div>
+                <div class="form-group"><label>游戏名称</label><input type="text" id="gameName" placeholder="例: Apex英雄"></div>
+                <div class="form-group"><label>Emoji</label><input type="text" id="gameEmoji" placeholder="🪂🔫"></div>
+                <div class="form-group"><label>描述</label><input type="text" id="gameDesc" placeholder="大逃杀"></div>
+                <div class="form-group"><button id="addGameBtn" class="btn">➕ 添加/更新</button></div>
+            </div>
+            <table id="gamesTable"><thead><tr><th>ID</th><th>名称</th><th>Emoji</th><th>描述</th><th>操作</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div id="tabPlayers" class="tab-content">
+            <div class="form-row">
+                <div class="form-group"><label>昵称</label><input type="text" id="pNickname"></div>
+                <div class="form-group"><label>游戏</label><select id="pGameSelect"></select></div>
+                <div class="form-group"><label>类型</label><select id="pType"><option value="tech">技术陪</option><option value="entertain">娱乐陪</option><option value="gourmet">喰种</option></select></div>
+                <div class="form-group"><label>段位</label><input type="text" id="pRank"></div>
+                <div class="form-group"><label>技术单价(元/小时)</label><input type="number" id="pTechPrice" step="5"></div>
+                <div class="form-group"><label>娱乐单价(元/小时)</label><input type="number" id="pEntertainPrice" step="5"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>头像URL(已弃用)</label><input type="text" id="pAvatar" placeholder="不再使用图片"></div>
+                <div class="form-group"><label>荣誉(,分隔)</label><input type="text" id="pHonors" placeholder="冠军🏆,MVP"></div>
+                <div class="form-group"><label>擅长(,分隔)</label><input type="text" id="pSkills" placeholder="捷风,芮娜"></div>
+                <div class="form-group"><label>额外统计(JSON)</label><input type="text" id="pStats" placeholder='{"kd":2.5}'></div>
+                <div class="form-group"><button id="addUpdatePlayerBtn" class="btn">➕ 添加/更新</button></div>
+            </div>
+            <table id="playersAdminTable"><thead><tr><th>昵称</th><th>游戏</th><th>类型</th><th>段位</th><th>价格</th><th>操作</th></tr></thead><tbody></tbody></tr>
+        </div>
+        <div id="tabFilters" class="tab-content">
+            <div class="form-row">
+                <div class="form-group"><label>游戏</label><select id="filterGameSelect"></select></div>
+                <div class="form-group"><label>字段key</label><input type="text" id="filterKey" placeholder="例: kd"></div>
+                <div class="form-group"><label>显示标签</label><input type="text" id="filterLabel" placeholder="例: 综合KD"></div>
+                <div class="form-group"><label>选项(,分隔)</label><input type="text" id="filterOptions" placeholder="≥1.5,≥2.0,≥2.5"></div>
+                <div class="form-group"><button id="addFilterBtn" class="btn">➕ 添加</button></div>
+            </div>
+            <div id="filtersList"></div>
+        </div>
+        <div id="tabTasks" class="tab-content">
+            <div class="form-row">
+                <div class="form-group"><label>赏金</label><input type="text" id="taskBounty"></div>
+                <div class="form-group"><label>委托内容</label><input type="text" id="taskContent"></div>
+                <div class="form-group"><label>额外需求</label><input type="text" id="taskExtra"></div>
+                <div class="form-group"><label>时间范围</label><input type="text" id="taskTimeRange"></div>
+                <div class="form-group"><label>号码牌(隐藏)</label><input type="text" id="taskHiddenCode"></div>
+                <div class="form-group"><button id="addTaskBtn" class="btn">➕ 添加委托</button></div>
+            </div>
+            <table id="tasksAdminTable"><thead><tr><th>赏金</th><th>内容</th><th>额外</th><th>时间范围</th><th>号码牌</th><th>操作</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+
+    <div id="clientView">
+        <div id="gamesGrid" class="games-grid">加载游戏中...</div>
+        <div id="detailPanel">
+            <div class="filter-bar" id="filterBar"></div>
+            <div id="playersListContainer" class="players-list"></div>
+        </div>
+    </div>
+</div>
+
+<div id="bulletinModal" class="modal">
+    <div class="modal-content wood-bg">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color:#ffdd99;">📜 喰种委托布告栏</h2>
+            <button id="closeBulletinBtn" class="btn-outline btn" style="background:#3e2a1f;">✖ 关闭</button>
+        </div>
+        <div id="tasksContainer" class="tasks-grid"></div>
+    </div>
+</div>
+
+<script>
+    (async function() {
+        if (!window.supabase) {
+            document.getElementById('gamesGrid').innerHTML = '<div>❌ Supabase SDK 加载失败，请刷新页面。</div>';
+            return;
+        }
+        const _SUPABASE_URL = 'https://zdsdipaqfxchpinifxtb.supabase.co';
+        const _SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpkc2RpcGFxZnhjaHBpbmlmeHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDgwMDgsImV4cCI6MjA5MjUyNDAwOH0.HZ6MxcZqrC-zo9-d-rdjPmcHgpnwF2tphRWm-zPvwFs';
+        const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON_KEY);
+
+        let games = [], players = [], filters = {}, tasks = [];
+        let currentGameId = null;
+        let isAdminUnlocked = false;
+        const ADMIN_PASSWORD = "admin123";
+        let editingPlayerId = null, editingGameId = null, editingTaskId = null;
+        let sortableInstance = null;
+
+        async function loadGames() {
+            const { data, error } = await _supabase.from('games').select('*');
+            if (!error) games = data || [];
+            renderGamesGrid();
+        }
+        async function loadPlayers() {
+            const { data, error } = await _supabase.from('players').select('*');
+            if (!error) {
+                players = (data || []).map(p => ({
+                    ...p,
+                    honors: p.honors ? p.honors.split(',') : [],
+                    skills: p.skills ? p.skills.split(',') : [],
+                    stats: p.stats || {}
+                }));
+            }
+            if (currentGameId) { renderFilterBar(); renderPlayersList(); }
+            if (isAdminUnlocked && document.getElementById('adminPanel').style.display === 'block') refreshPlayersAdminTable();
+        }
+        async function loadFilters() {
+            const { data, error } = await _supabase.from('filters').select('*');
+            filters = {};
+            if (!error && data) {
+                data.forEach(f => {
+                    if (!filters[f.game_id]) filters[f.game_id] = [];
+                    filters[f.game_id].push({
+                        key: f.key, label: f.label, options: f.options,
+                        getValue: (p) => p.stats?.[f.key] !== undefined ? p.stats[f.key] : (p[f.key] || ''),
+                        compare: (val, opt) => {
+                            if (opt.startsWith('≥')) return parseFloat(val) >= parseFloat(opt.slice(1));
+                            if (opt.startsWith('≤')) return parseFloat(val) <= parseFloat(opt.slice(1));
+                            if (opt.includes('-')) { let [a,b]=opt.split('-'); let num=parseFloat(val); return num>=parseFloat(a) && num<=parseFloat(b); }
+                            return String(val) === opt;
+                        }
+                    });
+                });
+            }
+            if (currentGameId) renderFilterBar();
+            if (isAdminUnlocked && document.getElementById('adminPanel').style.display === 'block') refreshFiltersList();
+        }
+        async function loadTasks() {
+            const { data, error } = await _supabase.from('tasks').select('*').eq('is_active', true);
+            if (!error) tasks = data || [];
+            if (isAdminUnlocked && document.getElementById('adminPanel').style.display === 'block') refreshTasksAdminTable();
+            renderBulletinBoard();
+        }
+        async function loadAllData() {
+            await loadGames();
+            await loadPlayers();
+            await loadFilters();
+            await loadTasks();
+            if (isAdminUnlocked && document.getElementById('adminPanel').style.display === 'block') {
+                refreshGamesTable();
+                refreshPlayersAdminTable();
+                refreshFilterGameSelect();
+                refreshFiltersList();
+                refreshTasksAdminTable();
+            }
+        }
+
+        function renderGamesGrid() {
+            const grid = document.getElementById('gamesGrid');
+            if (!games.length) { grid.innerHTML = '<div>暂无游戏，请点击店长模式初始化。</div>'; return; }
+            grid.innerHTML = '';
+            games.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `<div style="font-size:3rem;">${game.emoji || '🎮'}</div><h3>${game.name}</h3><p>${game.description || ''}</p>`;
+                card.onclick = () => { currentGameId = game.id; renderFilterBar(); renderPlayersList(); };
+                grid.appendChild(card);
+            });
+        }
+        function renderFilterBar() {
+            const container = document.getElementById('filterBar');
+            if (!currentGameId) { container.innerHTML = ''; return; }
+            const gf = filters[currentGameId] || [];
+            if (gf.length === 0) { container.innerHTML = '<div>暂无筛选器</div>'; return; }
+            let html = '';
+            gf.forEach(f => {
+                html += `<div class="filter-group"><label>${f.label}</label><select id="filter_${f.key}"><option value="">全部</option>${f.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></div>`;
+            });
+            html += `<button class="btn" id="resetFiltersBtn" style="background:#2a2e48;">重置筛选</button>`;
+            container.innerHTML = html;
+            gf.forEach(f => { const sel = document.getElementById(`filter_${f.key}`); if (sel) sel.onchange = () => applyFiltersAndRender(); });
+            const resetBtn = document.getElementById('resetFiltersBtn');
+            if (resetBtn) resetBtn.onclick = () => {
+                gf.forEach(f => { const s = document.getElementById(`filter_${f.key}`); if(s) s.value = ''; });
+                applyFiltersAndRender();
+            };
+            applyFiltersAndRender();
+        }
+        function getCurrentFilterValues() {
+            const vals = {};
+            if (!currentGameId) return vals;
+            const gf = filters[currentGameId] || [];
+            gf.forEach(f => { const sel = document.getElementById(`filter_${f.key}`); if (sel && sel.value) vals[f.key] = sel.value; });
+            return vals;
+        }
+        function filterPlayers() {
+            let filtered = players.filter(p => p.game_id === currentGameId && p.is_active !== false);
+            const vals = getCurrentFilterValues();
+            const gf = filters[currentGameId] || [];
+            for (let f of gf) {
+                const selected = vals[f.key];
+                if (!selected) continue;
+                filtered = filtered.filter(p => f.compare(f.getValue(p), selected));
+            }
+            return filtered;
+        }
+        function renderPlayersList() {
+            const container = document.getElementById('playersListContainer');
+            if (!currentGameId) { container.innerHTML = '<div>请选择一个游戏</div>'; return; }
+            const filtered = filterPlayers();
+            if (filtered.length === 0) { container.innerHTML = '<div>😭 没有符合条件的陪玩</div>'; return; }
+            container.innerHTML = '';
+            filtered.forEach(p => {
+                const typeText = { tech:'技术陪', entertain:'娱乐陪', gourmet:'喰种' }[p.type];
+                const icon = typeText === '技术陪' ? '🎮' : (typeText === '娱乐陪' ? '🎤' : '🍖');
+                const honorsHtml = p.honors?.length ? `<div class="honor-list">${p.honors.map(h => `<span class="honor-tag">🏅 ${escapeHtml(h)}</span>`).join('')}</div>` : '';
+                const skillsHtml = p.skills?.length ? `<div class="skill-list">擅长: ${p.skills.map(s => `<span class="skill-tag">🎯 ${escapeHtml(s)}</span>`).join('')}</div>` : '';
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.innerHTML = `
+                    <div class="player-icon">${icon}</div>
+                    <div class="info">
+                        <div class="nickname">${escapeHtml(p.nickname)} <span class="type-badge">${typeText}</span></div>
+                        <div>🏆 ${escapeHtml(p.rank)}</div>
+                        <div class="prices">
+                            <span class="price-tag">💰 技术单: ${p.tech_price || p.price}元/小时</span>
+                            <span class="price-tag">🎉 娱乐单: ${p.entertain_price || p.price}元/小时</span>
+                        </div>
+                        ${honorsHtml}
+                        ${skillsHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        function applyFiltersAndRender() { renderPlayersList(); }
+
+        function refreshGamesTable() {
+            const tbody = document.querySelector('#gamesTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            games.forEach(g => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = g.id;
+                row.insertCell(1).innerText = g.name;
+                row.insertCell(2).innerText = g.emoji;
+                row.insertCell(3).innerText = g.description;
+                const actions = row.insertCell(4);
+                actions.innerHTML = `<button onclick="window.editGameCall('${g.id}')">编辑</button><button onclick="window.deleteGameCall('${g.id}')" style="background:#aa2e2e;">删除</button>`;
+            });
+        }
+        window.editGameCall = (id) => {
+            const g = games.find(g => g.id === id);
+            if (g) {
+                document.getElementById('gameId').value = g.id;
+                document.getElementById('gameName').value = g.name;
+                document.getElementById('gameEmoji').value = g.emoji;
+                document.getElementById('gameDesc').value = g.description;
+                editingGameId = id;
+            }
+        };
+        window.deleteGameCall = async (id) => {
+            if (confirm('删除游戏及其所有陪玩？')) {
+                await _supabase.from('players').delete().eq('game_id', id);
+                await _supabase.from('filters').delete().eq('game_id', id);
+                await _supabase.from('games').delete().eq('id', id);
+                await loadAllData();
+            }
+        };
+        document.getElementById('addGameBtn').onclick = async () => {
+            let id = document.getElementById('gameId').value.trim();
+            let name = document.getElementById('gameName').value.trim();
+            let emoji = document.getElementById('gameEmoji').value.trim();
+            let desc = document.getElementById('gameDesc').value.trim();
+            if (!id || !name) { alert('ID和名称必填'); return; }
+            if (editingGameId) {
+                await _supabase.from('games').update({ id, name, emoji, description: desc }).eq('id', editingGameId);
+                editingGameId = null;
+            } else {
+                await _supabase.from('games').insert([{ id, name, emoji, description: desc }]);
+            }
+            await loadAllData();
+            document.getElementById('gameId').value = '';
+            document.getElementById('gameName').value = '';
+            document.getElementById('gameEmoji').value = '';
+            document.getElementById('gameDesc').value = '';
+        };
+        function refreshPlayersAdminTable() {
+            const tbody = document.querySelector('#playersAdminTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            players.forEach(p => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = p.nickname;
+                row.insertCell(1).innerText = p.game_id;
+                row.insertCell(2).innerText = { tech:'技术陪', entertain:'娱乐陪', gourmet:'喰种' }[p.type];
+                row.insertCell(3).innerText = p.rank;
+                row.insertCell(4).innerHTML = `技:${p.tech_price||p.price} / 娱:${p.entertain_price||p.price}`;
+                const actions = row.insertCell(5);
+                actions.innerHTML = `<button onclick="window.editPlayerCall('${p.id}')">编辑</button><button onclick="window.deletePlayerCall('${p.id}')" style="background:#aa2e2e;">删除</button>`;
+            });
+            const gameSelect = document.getElementById('pGameSelect');
+            if (gameSelect) {
+                gameSelect.innerHTML = '';
+                games.forEach(g => { const opt = document.createElement('option'); opt.value = g.id; opt.text = g.name; gameSelect.appendChild(opt); });
+            }
+        }
+        window.editPlayerCall = (id) => {
+            const p = players.find(p => p.id === id);
+            if (p) {
+                document.getElementById('pNickname').value = p.nickname;
+                document.getElementById('pGameSelect').value = p.game_id;
+                document.getElementById('pType').value = p.type;
+                document.getElementById('pRank').value = p.rank;
+                document.getElementById('pTechPrice').value = p.tech_price || p.price;
+                document.getElementById('pEntertainPrice').value = p.entertain_price || p.price;
+                document.getElementById('pAvatar').value = p.avatar || '';
+                document.getElementById('pHonors').value = (p.honors || []).join(',');
+                document.getElementById('pSkills').value = (p.skills || []).join(',');
+                document.getElementById('pStats').value = JSON.stringify(p.stats || {});
+                editingPlayerId = id;
+            }
+        };
+        window.deletePlayerCall = async (id) => {
+            if (confirm('删除陪玩？')) {
+                await _supabase.from('players').delete().eq('id', id);
+                await loadAllData();
+            }
+        };
+        document.getElementById('addUpdatePlayerBtn').onclick = async () => {
+            let nickname = document.getElementById('pNickname').value.trim();
+            let gameId = document.getElementById('pGameSelect').value;
+            let type = document.getElementById('pType').value;
+            let rank = document.getElementById('pRank').value;
+            let techPrice = parseInt(document.getElementById('pTechPrice').value);
+            let entertainPrice = parseInt(document.getElementById('pEntertainPrice').value);
+            let avatar = document.getElementById('pAvatar').value;
+            let honors = document.getElementById('pHonors').value.split(',').map(s=>s.trim()).filter(s=>s);
+            let skills = document.getElementById('pSkills').value.split(',').map(s=>s.trim()).filter(s=>s);
+            let stats = {};
+            try { stats = JSON.parse(document.getElementById('pStats').value || '{}'); } catch(e) {}
+            if (!nickname || !gameId || !rank || isNaN(techPrice) || isNaN(entertainPrice)) { alert('请填写完整'); return; }
+            const toStore = { nickname, game_id: gameId, type, rank, tech_price: techPrice, entertain_price: entertainPrice, avatar, honors: honors.join(','), skills: skills.join(','), stats };
+            if (editingPlayerId) {
+                await _supabase.from('players').update(toStore).eq('id', editingPlayerId);
+                editingPlayerId = null;
+            } else {
+                await _supabase.from('players').insert([toStore]);
+            }
+            await loadAllData();
+            document.getElementById('pNickname').value = '';
+            document.getElementById('pRank').value = '';
+            document.getElementById('pTechPrice').value = '';
+            document.getElementById('pEntertainPrice').value = '';
+            document.getElementById('pAvatar').value = '';
+            document.getElementById('pHonors').value = '';
+            document.getElementById('pSkills').value = '';
+            document.getElementById('pStats').value = '';
+        };
+        function refreshFilterGameSelect() {
+            const sel = document.getElementById('filterGameSelect');
+            if (sel) {
+                sel.innerHTML = '';
+                games.forEach(g => { const opt = document.createElement('option'); opt.value = g.id; opt.text = g.name; sel.appendChild(opt); });
+            }
+        }
+        function refreshFiltersList() {
+            const container = document.getElementById('filtersList');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let gameId in filters) {
+                const gameName = games.find(g=>g.id===gameId)?.name || gameId;
+                const div = document.createElement('div');
+                div.style.background = '#0b0e1a'; div.style.padding = '15px'; div.style.borderRadius = '24px'; div.style.marginBottom = '15px';
+                let html = `<strong>🎮 ${gameName}</strong><ul>`;
+                filters[gameId].forEach(f => {
+                    html += `<li>${f.label} (key: ${f.key}) 选项: ${f.options.join(', ')} <button onclick="window.deleteFilterCall('${gameId}','${f.key}')" style="background:#aa2e2e;">删除</button></li>`;
+                });
+                html += `</ul>`;
+                div.innerHTML = html;
+                container.appendChild(div);
+            }
+        }
+        window.deleteFilterCall = async (gameId, key) => {
+            await _supabase.from('filters').delete().match({ game_id: gameId, key });
+            await loadAllData();
+        };
+        document.getElementById('addFilterBtn').onclick = async () => {
+            const gameId = document.getElementById('filterGameSelect').value;
+            const key = document.getElementById('filterKey').value.trim();
+            const label = document.getElementById('filterLabel').value.trim();
+            const optionsStr = document.getElementById('filterOptions').value.trim();
+            if (!gameId || !key || !label || !optionsStr) { alert('请完整填写'); return; }
+            const options = optionsStr.split(',').map(s=>s.trim());
+            await _supabase.from('filters').insert([{ game_id: gameId, key, label, options }]);
+            await loadAllData();
+            document.getElementById('filterKey').value = '';
+            document.getElementById('filterLabel').value = '';
+            document.getElementById('filterOptions').value = '';
+        };
+
+        function refreshTasksAdminTable() {
+            const tbody = document.querySelector('#tasksAdminTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            tasks.forEach(t => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = t.bounty;
+                row.insertCell(1).innerText = t.content;
+                row.insertCell(2).innerText = t.extra || '';
+                row.insertCell(3).innerText = t.time_range || '';
+                row.insertCell(4).innerText = t.hidden_code || '';
+                const actions = row.insertCell(5);
+                actions.innerHTML = `<button onclick="window.editTaskCall(${t.id})">编辑</button><button onclick="window.deleteTaskCall(${t.id})" style="background:#aa2e2e;">删除</button>`;
+            });
+        }
+        window.editTaskCall = (id) => {
+            const t = tasks.find(t => t.id === id);
+            if (t) {
+                document.getElementById('taskBounty').value = t.bounty;
+                document.getElementById('taskContent').value = t.content;
+                document.getElementById('taskExtra').value = t.extra || '';
+                document.getElementById('taskTimeRange').value = t.time_range || '';
+                document.getElementById('taskHiddenCode').value = t.hidden_code || '';
+                editingTaskId = id;
+            }
+        };
+        window.deleteTaskCall = async (id) => {
+            if (confirm('删除委托？')) {
+                await _supabase.from('tasks').update({ is_active: false }).eq('id', id);
+                await loadTasks();
+            }
+        };
+        document.getElementById('addTaskBtn').onclick = async () => {
+            const bounty = document.getElementById('taskBounty').value.trim();
+            const content = document.getElementById('taskContent').value.trim();
+            const extra = document.getElementById('taskExtra').value.trim();
+            const time_range = document.getElementById('taskTimeRange').value.trim();
+            const hidden_code = document.getElementById('taskHiddenCode').value.trim();
+            if (!bounty || !content) { alert('赏金和内容不能为空'); return; }
+            const task = { bounty, content, extra, time_range, hidden_code, is_active: true };
+            if (editingTaskId) {
+                await _supabase.from('tasks').update(task).eq('id', editingTaskId);
+                editingTaskId = null;
+            } else {
+                await _supabase.from('tasks').insert([task]);
+            }
+            await loadTasks();
+            document.getElementById('taskBounty').value = '';
+            document.getElementById('taskContent').value = '';
+            document.getElementById('taskExtra').value = '';
+            document.getElementById('taskTimeRange').value = '';
+            document.getElementById('taskHiddenCode').value = '';
+        };
+
+        function renderBulletinBoard() {
+            const container = document.getElementById('tasksContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <h3>💰 ${escapeHtml(task.bounty)}</h3>
+                    <p><strong>委托内容：</strong>${escapeHtml(task.content)}</p>
+                    <p><strong>额外需求：</strong>${escapeHtml(task.extra || '无')}</p>
+                    <p><strong>时间范围：</strong>${escapeHtml(task.time_range || '未定')}</p>
+                    ${isAdminUnlocked ? `<span class="admin-tag">🔑 ${escapeHtml(task.hidden_code || '无')}</span>` : ''}
+                `;
+                container.appendChild(card);
+            });
+            if (sortableInstance) sortableInstance.destroy();
+            if (container.children.length > 0) {
+                sortableInstance = new Sortable(container, { animation: 300, ghostClass: 'sortable-ghost' });
+            }
+        }
+        function scatterTasks() {
+            const cards = document.querySelectorAll('#tasksContainer .task-card');
+            if (!cards.length) return;
+            cards.forEach(card => {
+                card.style.transition = 'transform 0.6s cubic-bezier(0.34,1.2,0.64,1)';
+                const angle = Math.random() * 2 * Math.PI;
+                const radius = Math.random() * 200 + 100;
+                const dx = Math.cos(angle) * radius;
+                const dy = Math.sin(angle) * radius;
+                card.style.transform = `translate(${dx}px, ${dy}px)`;
+                setTimeout(() => { card.style.transform = ''; }, 600);
+            });
+        }
+
+        const modal = document.getElementById('bulletinModal');
+        document.getElementById('openBulletinBtn').onclick = () => {
+            modal.style.display = 'flex';
+            renderBulletinBoard();
+            setTimeout(scatterTasks, 100);
+        };
+        document.getElementById('closeBulletinBtn').onclick = () => { modal.style.display = 'none'; };
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+        function enterAdminMode() {
+            const pwd = prompt('请输入店长密码：');
+            if (pwd === ADMIN_PASSWORD) {
+                isAdminUnlocked = true;
+                document.getElementById('adminPanel').style.display = 'block';
+                refreshGamesTable();
+                refreshPlayersAdminTable();
+                refreshFilterGameSelect();
+                refreshFiltersList();
+                refreshTasksAdminTable();
+            } else alert('密码错误');
+        }
+        function exitAdminMode() {
+            isAdminUnlocked = false;
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+        document.getElementById('shopOwnerBtn').onclick = enterAdminMode;
+        document.getElementById('backToClientBtn').onclick = exitAdminMode;
+
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`tab${target.charAt(0).toUpperCase() + target.slice(1)}`).classList.add('active');
+            };
+        });
+
+        function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+        await loadAllData();
+        exitAdminMode();
+    })();
+</script>
+</body>
+</html>
