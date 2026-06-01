@@ -49,7 +49,12 @@
             border: 1px solid rgba(255, 140, 0, 0.4);
             display: none;
         }
-        .admin-tabs { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .admin-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
         .admin-tab {
             background: rgba(42, 46, 72, 0.7);
             padding: 10px 24px;
@@ -268,6 +273,7 @@
             <div class="admin-tab" data-tab="filters">🔍 筛选器配置</div>
             <div class="admin-tab" data-tab="tasks">📋 委托管理</div>
         </div>
+        <!-- 游戏管理 -->
         <div id="tabGames" class="tab-content active">
             <div class="form-row">
                 <div class="form-group"><label>游戏ID</label><input type="text" id="gameId" placeholder="例: apex"></div>
@@ -278,6 +284,7 @@
             </div>
             <table id="gamesTable"><thead><tr><th>ID</th><th>名称</th><th>Emoji</th><th>描述</th><th>操作</th></tr></thead><tbody></tbody></table>
         </div>
+        <!-- 陪玩管理 -->
         <div id="tabPlayers" class="tab-content">
             <div class="form-row">
                 <div class="form-group"><label>昵称</label><input type="text" id="pNickname"></div>
@@ -296,6 +303,7 @@
             </div>
             <table id="playersAdminTable"><thead><tr><th>昵称</th><th>游戏</th><th>类型</th><th>段位</th><th>价格</th><th>操作</th></tr></thead><tbody></tbody></tr>
         </div>
+        <!-- 筛选器配置 -->
         <div id="tabFilters" class="tab-content">
             <div class="form-row">
                 <div class="form-group"><label>游戏</label><select id="filterGameSelect"></select></div>
@@ -306,6 +314,7 @@
             </div>
             <div id="filtersList"></div>
         </div>
+        <!-- 委托管理（新增完整增删改查） -->
         <div id="tabTasks" class="tab-content">
             <div class="form-row">
                 <div class="form-group"><label>赏金</label><input type="text" id="taskBounty"></div>
@@ -315,7 +324,12 @@
                 <div class="form-group"><label>号码牌(隐藏)</label><input type="text" id="taskHiddenCode"></div>
                 <div class="form-group"><button id="addTaskBtn" class="btn">➕ 添加委托</button></div>
             </div>
-            <table id="tasksAdminTable"><thead><tr><th>赏金</th><th>内容</th><th>额外</th><th>时间范围</th><th>号码牌</th><th>操作</th></tr></thead><tbody></tbody></table>
+            <table id="tasksAdminTable">
+                <thead>
+                    <tr><th>赏金</th><th>内容</th><th>额外需求</th><th>时间范围</th><th>号码牌</th><th>操作</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
@@ -355,6 +369,7 @@
         let editingPlayerId = null, editingGameId = null, editingTaskId = null;
         let sortableInstance = null;
 
+        // ---------- 加载数据 ----------
         async function loadGames() {
             const { data, error } = await _supabase.from('games').select('*');
             if (!error) games = data || [];
@@ -414,6 +429,7 @@
             }
         }
 
+        // ---------- 老板端渲染 ----------
         function renderGamesGrid() {
             const grid = document.getElementById('gamesGrid');
             if (!games.length) { grid.innerHTML = '<div>暂无游戏，请点击店长模式初始化。</div>'; return; }
@@ -476,14 +492,17 @@
                 const skillsHtml = p.skills?.length ? `<div class="skill-list">擅长: ${p.skills.map(s => `<span class="skill-tag">🎯 ${escapeHtml(s)}</span>`).join('')}</div>` : '';
                 const card = document.createElement('div');
                 card.className = 'player-card';
+                // 关键修复：技术单和娱乐单价格显示在同一卡片内
+                const techPrice = p.tech_price || p.price;
+                const entertainPrice = p.entertain_price || p.price;
                 card.innerHTML = `
                     <div class="player-icon">${icon}</div>
                     <div class="info">
                         <div class="nickname">${escapeHtml(p.nickname)} <span class="type-badge">${typeText}</span></div>
                         <div>🏆 ${escapeHtml(p.rank)}</div>
                         <div class="prices">
-                            <span class="price-tag">💰 技术单: ${p.tech_price || p.price}元/小时</span>
-                            <span class="price-tag">🎉 娱乐单: ${p.entertain_price || p.price}元/小时</span>
+                            <span class="price-tag">💰 技术单: ${techPrice}元/小时</span>
+                            <span class="price-tag">🎉 娱乐单: ${entertainPrice}元/小时</span>
                         </div>
                         ${honorsHtml}
                         ${skillsHtml}
@@ -494,6 +513,7 @@
         }
         function applyFiltersAndRender() { renderPlayersList(); }
 
+        // ---------- 店长模式界面 ----------
         function refreshGamesTable() {
             const tbody = document.querySelector('#gamesTable tbody');
             if (!tbody) return;
@@ -658,6 +678,7 @@
             document.getElementById('filterOptions').value = '';
         };
 
+        // ---------- 委托管理（增删改查）----------
         function refreshTasksAdminTable() {
             const tbody = document.querySelector('#tasksAdminTable tbody');
             if (!tbody) return;
@@ -712,6 +733,7 @@
             document.getElementById('taskHiddenCode').value = '';
         };
 
+        // ---------- 布告栏渲染（老板端）----------
         function renderBulletinBoard() {
             const container = document.getElementById('tasksContainer');
             if (!container) return;
@@ -747,6 +769,7 @@
             });
         }
 
+        // ---------- 模态框控制 ----------
         const modal = document.getElementById('bulletinModal');
         document.getElementById('openBulletinBtn').onclick = () => {
             modal.style.display = 'flex';
@@ -756,6 +779,7 @@
         document.getElementById('closeBulletinBtn').onclick = () => { modal.style.display = 'none'; };
         window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 
+        // ---------- 店长模式开关 ----------
         function enterAdminMode() {
             const pwd = prompt('请输入店长密码：');
             if (pwd === ADMIN_PASSWORD) {
@@ -775,6 +799,7 @@
         document.getElementById('shopOwnerBtn').onclick = enterAdminMode;
         document.getElementById('backToClientBtn').onclick = exitAdminMode;
 
+        // ---------- 标签页切换 ----------
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
