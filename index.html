@@ -6,13 +6,15 @@
     <title>喰种电竞 · 委托布告栏</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #eef;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
         }
-
-        /* 粒子画布 */
         #particlesCanvas {
             position: fixed;
             top: 0;
@@ -22,24 +24,7 @@
             pointer-events: none;
             z-index: 0;
         }
-
-        body {
-            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            color: #eef;
-            padding: 20px;
-            min-height: 100vh;
-            position: relative;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 2;
-        }
-
-        /* 玻璃态工具栏 */
+        .container { max-width: 1400px; margin: 0 auto; position: relative; z-index: 2; }
         .toolbar {
             backdrop-filter: blur(12px);
             background: rgba(30, 36, 59, 0.6);
@@ -54,7 +39,6 @@
             border: 1px solid rgba(255, 140, 0, 0.3);
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
-
         .btn {
             background: linear-gradient(135deg, #ff6a00, #ff3a00);
             border: none;
@@ -65,39 +49,9 @@
             cursor: pointer;
             transition: 0.2s;
             box-shadow: 0 2px 8px rgba(255,60,0,0.4);
-            position: relative;
-            overflow: hidden;
         }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.4s, height 0.4s;
-        }
-
-        .btn:active::after {
-            width: 120px;
-            height: 120px;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #ff8c42;
-            box-shadow: none;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
-        }
-
+        .btn-outline { background: transparent; border: 1px solid #ff8c42; box-shadow: none; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
         /* 店长面板 */
         .admin-panel {
             backdrop-filter: blur(20px);
@@ -109,7 +63,6 @@
             box-shadow: 0 20px 35px rgba(0,0,0,0.4);
             display: none;
         }
-
         .branch-tabs {
             display: flex;
             gap: 15px;
@@ -117,7 +70,6 @@
             border-bottom: 1px solid #ff8c42;
             padding-bottom: 10px;
         }
-
         .branch-tab {
             background: rgba(42, 46, 72, 0.7);
             padding: 10px 28px;
@@ -125,53 +77,25 @@
             cursor: pointer;
             font-size: 1.1rem;
             font-weight: bold;
-            transition: 0.2s;
         }
-
-        .branch-tab.active {
-            background: #ff6a00;
-            color: white;
-            box-shadow: 0 0 12px #ff6a00;
-        }
-
-        .branch-content {
-            display: none;
-        }
-
-        .branch-content.active {
-            display: block;
-        }
-
-        /* 选陪系统内部子标签 */
+        .branch-tab.active { background: #ff6a00; color: white; box-shadow: 0 0 12px #ff6a00; }
+        .branch-content { display: none; }
+        .branch-content.active { display: block; }
         .sub-tabs {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-
         .sub-tab {
             background: #2a2e48;
             padding: 6px 20px;
             border-radius: 30px;
             cursor: pointer;
-            transition: 0.2s;
         }
-
-        .sub-tab.active {
-            background: #ff8c42;
-            color: #1a1f2e;
-            box-shadow: 0 0 8px #ff8c42;
-        }
-
-        .sub-content {
-            display: none;
-        }
-
-        .sub-content.active {
-            display: block;
-        }
-
+        .sub-tab.active { background: #ff8c42; color: #1a1f2e; box-shadow: 0 0 8px #ff8c42; }
+        .sub-content { display: none; }
+        .sub-content.active { display: block; }
         .form-row {
             display: flex;
             flex-wrap: wrap;
@@ -179,58 +103,25 @@
             margin-bottom: 20px;
             align-items: flex-end;
         }
-
-        .form-group {
-            flex: 1;
-            min-width: 140px;
-        }
-
-        label {
-            font-size: 0.75rem;
-            color: #ccd;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input,
-        select,
-        textarea {
+        .form-group { flex: 1; min-width: 140px; }
+        label { font-size: 0.75rem; color: #ccd; display: block; margin-bottom: 5px; }
+        input, select, textarea {
             background: #0b0e1a;
             border: 1px solid #ff8c42;
             color: white;
             padding: 10px 14px;
             border-radius: 28px;
             width: 100%;
-            transition: 0.2s;
         }
-
-        input:focus,
-        select:focus {
-            border-color: #ffaa66;
-            outline: none;
-            box-shadow: 0 0 8px #ff8c42;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0,0,0,0.3);
             border-radius: 20px;
             overflow: hidden;
         }
-
-        th,
-        td {
-            padding: 12px 10px;
-            text-align: left;
-            border-bottom: 1px solid #2a2e48;
-        }
-
-        th {
-            color: #ffb347;
-            background: #13172b;
-        }
-
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #2a2e48; }
+        th { color: #ffb347; background: #13172b; }
         .actions button {
             background: #2a2e48;
             border: none;
@@ -240,8 +131,6 @@
             cursor: pointer;
             color: white;
         }
-
-        /* 老板端炫技卡片 */
         .games-grid {
             display: flex;
             flex-wrap: wrap;
@@ -249,7 +138,6 @@
             gap: 30px;
             margin-bottom: 40px;
         }
-
         .game-card {
             background: rgba(20, 24, 40, 0.6);
             backdrop-filter: blur(12px);
@@ -258,108 +146,33 @@
             width: 260px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            border: 1px solid rgba(255, 100, 0, 0.3);
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.2,0.9,0.4,1.1);
+            border: 1px solid rgba(255,100,0,0.3);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.3);
         }
-
-        .game-card:hover {
-            transform: translateY(-15px) scale(1.02);
-            border-color: #ff8c42;
-            box-shadow: 0 30px 45px rgba(255, 100, 0, 0.4);
-            background: rgba(40, 45, 70, 0.8);
-        }
-
-        .players-list {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
+        .game-card:hover { transform: translateY(-15px) scale(1.02); border-color: #ff8c42; box-shadow: 0 30px 45px rgba(255,100,0,0.4); background: rgba(40,45,70,0.8); }
+        .players-list { display: flex; flex-direction: column; gap: 24px; }
         .player-card {
             background: linear-gradient(135deg, #151e2c, #1a2335);
             border-radius: 40px;
             display: flex;
             flex-direction: row;
             overflow: hidden;
-            border: 1px solid rgba(255, 140, 0, 0.4);
+            border: 1px solid rgba(255,140,0,0.4);
             transition: 0.3s ease;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-
-        .player-card:hover {
-            transform: scale(1.01);
-            border-color: #ffaa55;
-            box-shadow: 0 18px 32px rgba(255, 100, 0, 0.35);
-        }
-
-        .player-icon {
-            width: 100px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.3);
-            font-size: 3rem;
-        }
-
-        .info {
-            flex: 1;
-            padding: 18px;
-        }
-
-        .nickname {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #ffdfa5;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .type-badge {
-            background: #ff8c42;
-            color: #1a1f2e;
-            padding: 5px 18px;
-            border-radius: 60px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .prices {
-            display: flex;
-            gap: 20px;
-            margin: 8px 0;
-        }
-
-        .price-tag {
-            background: #2a3452;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            color: #ffdd99;
-        }
-
-        .honor-list,
-        .skill-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .honor-tag,
-        .skill-tag {
-            background: #2a3452;
-            padding: 4px 14px;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            color: #ffdd99;
-        }
-
+        .player-card:hover { transform: scale(1.01); border-color: #ffaa55; box-shadow: 0 18px 32px rgba(255,100,0,0.35); }
+        .player-icon { width: 100px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); font-size: 3rem; }
+        .info { flex: 1; padding: 18px; }
+        .nickname { font-size: 1.6rem; font-weight: bold; color: #ffdfa5; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .type-badge { background: #ff8c42; color: #1a1f2e; padding: 5px 18px; border-radius: 60px; font-size: 0.8rem; font-weight: bold; }
+        .prices { display: flex; gap: 20px; margin: 8px 0; }
+        .price-tag { background: #2a3452; padding: 4px 12px; border-radius: 30px; font-size: 0.9rem; color: #ffdd99; }
+        .honor-list, .skill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .honor-tag, .skill-tag { background: #2a3452; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; color: #ffdd99; }
         .filter-bar {
-            background: rgba(19, 23, 43, 0.8);
+            background: rgba(19,23,43,0.8);
             backdrop-filter: blur(12px);
             padding: 15px 25px;
             border-radius: 80px;
@@ -369,17 +182,8 @@
             gap: 15px;
             align-items: center;
         }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #1e233c;
-            padding: 5px 24px;
-            border-radius: 60px;
-        }
-
-        /* 老板端委托布告栏模态框 - 炫酷木板纹理 + 卡片散开 */
+        .filter-group { display: flex; align-items: center; gap: 12px; background: #1e233c; padding: 5px 24px; border-radius: 60px; }
+        /* 模态框：委托布告栏 */
         .modal {
             display: none;
             position: fixed;
@@ -387,13 +191,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0,0,0,0.85);
             backdrop-filter: blur(4px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
-
         .modal-content {
             width: 90%;
             max-width: 1200px;
@@ -403,11 +206,10 @@
             position: relative;
             overflow-y: auto;
             padding: 20px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
             background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
             background-blend-mode: overlay;
         }
-
         .tasks-grid {
             display: flex;
             flex-wrap: wrap;
@@ -415,50 +217,26 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 400px;
-            position: relative;
         }
-
         .task-card {
             background: #fdf8e7;
             color: #3e2a1f;
             width: 260px;
             padding: 16px;
             border-radius: 24px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             cursor: grab;
-            transition: 0.1s;
             border: 1px solid #d4b48c;
         }
-
-        .task-card:active {
-            cursor: grabbing;
-        }
-
-        .task-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
-            border-left: 4px solid #ff8c42;
-            padding-left: 8px;
-        }
-
-        .admin-tag {
-            background: #ff8c42;
-            color: #1a1f2e;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            display: inline-block;
-            margin-left: 10px;
-        }
-
-        /* 店长模式委托管理卡片（炫技） */
+        .task-card:active { cursor: grabbing; }
+        .task-card h3 { font-size: 1.2rem; margin-bottom: 8px; border-left: 4px solid #ff8c42; padding-left: 8px; }
+        .admin-tag { background: #ff8c42; color: #1a1f2e; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; display: inline-block; margin-left: 10px; }
         .tasks-admin-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             margin-top: 20px;
         }
-
         .task-admin-card {
             background: #2a2e48;
             border-radius: 28px;
@@ -466,47 +244,43 @@
             width: 280px;
             transition: 0.2s;
             border: 1px solid #ff8c42;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
-
-        .task-admin-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(255,100,0,0.3);
+        .task-admin-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(255,100,0,0.3); }
+        .task-admin-card h4 { color: #ffb347; margin-bottom: 8px; }
+        .task-admin-actions { margin-top: 12px; display: flex; gap: 10px; }
+        /* 公告悬浮窗 */
+        .modal-notice {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
         }
-
-        .task-admin-card h4 {
-            color: #ffb347;
-            margin-bottom: 8px;
+        .notice-card {
+            background: #1e243b;
+            backdrop-filter: blur(16px);
+            border-radius: 32px;
+            width: 380px;
+            max-width: 80%;
+            padding: 24px;
+            border: 1px solid #ff8c42;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+            position: relative;
         }
-
-        .task-admin-card p {
-            margin: 6px 0;
-            font-size: 0.85rem;
-        }
-
-        .task-admin-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .task-admin-actions button {
-            padding: 4px 12px;
-            font-size: 0.75rem;
-        }
-
+        .notice-card h3 { color: #ffd966; margin-bottom: 12px; }
+        .notice-card p { font-size: 0.95rem; line-height: 1.4; margin-bottom: 20px; }
+        .close-notice { position: absolute; top: 12px; right: 16px; font-size: 24px; cursor: pointer; color: #aaa; }
+        .close-notice:hover { color: #ff8c42; }
+        .notice-btn { background: #ff6a00; border: none; padding: 6px 18px; border-radius: 30px; color: white; cursor: pointer; }
         @media (max-width: 700px) {
-            .player-card {
-                flex-direction: column;
-            }
-            .player-icon {
-                width: 100%;
-                padding: 20px 0;
-            }
-            .filter-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
+            .player-card { flex-direction: column; }
+            .player-icon { width: 100%; padding: 20px 0; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -518,6 +292,7 @@
         <div style="font-weight: bold; font-size: 1.6rem;">🍽️ 喰种电竞</div>
         <div>
             <button id="openBulletinBtn" class="btn" style="background:#2a5f7a;">📜 喰种委托布告栏</button>
+            <button id="openNoticeBtn" class="btn" style="background:#4a6e8a;">📢 公告</button>
             <button id="shopOwnerBtn" class="btn">👑 店长模式</button>
         </div>
     </div>
@@ -525,22 +300,21 @@
     <!-- 店长面板 -->
     <div id="adminPanel" class="admin-panel">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="margin:0;">🛠️ 店长控制台</h2>
+            <h2>🛠️ 店长控制台</h2>
             <button id="backToClientBtn" class="btn-outline btn">← 返回</button>
         </div>
         <div class="branch-tabs">
             <div class="branch-tab active" data-branch="peiwang">🎮 选陪系统</div>
             <div class="branch-tab" data-branch="weituo">📋 委托管理</div>
+            <div class="branch-tab" data-branch="settings">⚙️ 系统设置</div>
         </div>
-
-        <!-- 选陪系统分支 -->
+        <!-- 选陪系统 -->
         <div id="branchPeiwang" class="branch-content active">
             <div class="sub-tabs">
                 <div class="sub-tab active" data-sub="games">🎮 游戏管理</div>
                 <div class="sub-tab" data-sub="players">👥 陪玩管理</div>
                 <div class="sub-tab" data-sub="filters">🔍 筛选器配置</div>
             </div>
-            <!-- 游戏管理 -->
             <div id="subGames" class="sub-content active">
                 <div class="form-row">
                     <div class="form-group"><label>游戏ID</label><input type="text" id="gameId" placeholder="例: apex"></div>
@@ -551,7 +325,6 @@
                 </div>
                 <table id="gamesTable"><thead><tr><th>ID</th><th>名称</th><th>Emoji</th><th>描述</th><th>操作</th></tr></thead><tbody></tbody></table>
             </div>
-            <!-- 陪玩管理 -->
             <div id="subPlayers" class="sub-content">
                 <div class="form-row">
                     <div class="form-group"><label>昵称</label><input type="text" id="pNickname"></div>
@@ -570,7 +343,6 @@
                 </div>
                 <table id="playersAdminTable"><thead><tr><th>昵称</th><th>游戏</th><th>类型</th><th>段位</th><th>价格</th><th>操作</th></tr></thead><tbody></tbody></table>
             </div>
-            <!-- 筛选器配置 -->
             <div id="subFilters" class="sub-content">
                 <div class="form-row">
                     <div class="form-group"><label>游戏</label><select id="filterGameSelect"></select></div>
@@ -582,8 +354,7 @@
                 <div id="filtersList"></div>
             </div>
         </div>
-
-        <!-- 委托管理分支（炫技卡片） -->
+        <!-- 委托管理 -->
         <div id="branchWeituo" class="branch-content">
             <div class="form-row">
                 <div class="form-group"><label>赏金</label><input type="text" id="taskBounty" placeholder="例: 200元"></div>
@@ -595,9 +366,22 @@
             </div>
             <div id="tasksAdminContainer" class="tasks-admin-grid"></div>
         </div>
+        <!-- 系统设置 -->
+        <div id="branchSettings" class="branch-content">
+            <h3>🔧 公告管理</h3>
+            <div class="form-row">
+                <div class="form-group" style="flex:2;">
+                    <label>公告内容</label>
+                    <textarea id="announcementContent" rows="4" placeholder="输入公告内容..."></textarea>
+                </div>
+                <div class="form-group" style="flex:0;">
+                    <button id="saveAnnouncementBtn" class="btn">💾 保存公告</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 老板端 -->
+    <!-- 老板端视图 -->
     <div id="clientView">
         <div id="gamesGrid" class="games-grid">加载游戏中...</div>
         <div id="detailPanel">
@@ -607,7 +391,7 @@
     </div>
 </div>
 
-<!-- 老板端委托布告栏模态框 -->
+<!-- 委托布告栏模态框 -->
 <div id="bulletinModal" class="modal">
     <div class="modal-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -618,30 +402,32 @@
     </div>
 </div>
 
+<!-- 公告悬浮窗 -->
+<div id="noticeModal" class="modal-notice">
+    <div class="notice-card">
+        <span class="close-notice" id="closeNoticeBtn">&times;</span>
+        <h3>📢 店铺公告</h3>
+        <p id="noticeContent">加载中...</p>
+        <button id="confirmNoticeBtn" class="notice-btn">知道了</button>
+    </div>
+</div>
+
 <script>
     (async function() {
-        // ======================= 粒子效果（炫技） =======================
+        // ========== 粒子效果 ==========
         const canvas = document.getElementById('particlesCanvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
             let width = window.innerWidth, height = window.innerHeight;
             let particles = [];
-            function resizeCanvas() {
-                width = window.innerWidth;
-                height = window.innerHeight;
-                canvas.width = width;
-                canvas.height = height;
-            }
+            function resizeCanvas() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
             function initParticles() {
                 particles = [];
                 for (let i = 0; i < 120; i++) {
                     particles.push({
-                        x: Math.random() * width,
-                        y: Math.random() * height,
+                        x: Math.random() * width, y: Math.random() * height,
                         radius: Math.random() * 2.5 + 1,
-                        vx: (Math.random() - 0.5) * 0.6,
-                        vy: (Math.random() - 0.5) * 0.6,
-                        alpha: Math.random() * 0.5 + 0.2,
+                        vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6,
                         color: `rgba(255, 140, 0, ${Math.random() * 0.5 + 0.2})`
                     });
                 }
@@ -650,26 +436,19 @@
                 if (!ctx) return;
                 ctx.clearRect(0, 0, width, height);
                 for (let p of particles) {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    ctx.fill();
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    if (p.x < 0) p.x = width;
-                    if (p.x > width) p.x = 0;
-                    if (p.y < 0) p.y = height;
-                    if (p.y > height) p.y = 0;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color; ctx.fill();
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0) p.x = width; if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height; if (p.y > height) p.y = 0;
                 }
                 requestAnimationFrame(drawParticles);
             }
             window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
-            resizeCanvas();
-            initParticles();
-            drawParticles();
+            resizeCanvas(); initParticles(); drawParticles();
         }
 
-        // ======================= Supabase 配置 =======================
+        // ========== Supabase 配置 ==========
         if (!window.supabase) {
             document.getElementById('gamesGrid').innerHTML = '<div>❌ Supabase SDK 加载失败</div>';
             return;
@@ -678,14 +457,51 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpkc2RpcGFxZnhjaHBpbmlmeHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDgwMDgsImV4cCI6MjA5MjUyNDAwOH0.HZ6MxcZqrC-zo9-d-rdjPmcHgpnwF2tphRWm-zPvwFs';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let games = [], players = [], filters = {}, tasks = [];
+        let games = [], players = [], filters = {}, tasks = [], announcement = { content: '' };
         let currentGameId = null;
         let isAdminUnlocked = false;
         const ADMIN_PASSWORD = "admin123";
         let editingPlayerId = null, editingGameId = null, editingTaskId = null;
         let sortableInstance = null;
 
-        // ---------- 数据加载 ----------
+        // ========== 公告函数 ==========
+        async function loadAnnouncement() {
+            const { data, error } = await supabase.from('announcement').select('content').eq('id', 1).single();
+            if (!error && data) announcement = data;
+            else announcement.content = '欢迎来到喰种电竞！首单半价，冠军陪玩等你来！';
+            document.getElementById('noticeContent').innerText = announcement.content;
+            if (isAdminUnlocked && document.getElementById('adminPanel').style.display === 'block') {
+                document.getElementById('announcementContent').value = announcement.content;
+            }
+        }
+        async function updateAnnouncement(content) {
+            const { error } = await supabase.from('announcement').update({ content, updated_at: new Date() }).eq('id', 1);
+            if (!error) {
+                announcement.content = content;
+                document.getElementById('noticeContent').innerText = content;
+                if (isAdminUnlocked) document.getElementById('announcementContent').value = content;
+                alert('公告已保存');
+            } else alert('更新失败：' + error.message);
+        }
+
+        // 自动弹出公告（仅老板模式，未关闭过）
+        function showNoticeIfNeeded() {
+            const closed = localStorage.getItem('notice_closed');
+            if (!closed && !isAdminUnlocked) {
+                document.getElementById('noticeModal').style.display = 'flex';
+            }
+        }
+        function closeNotice() {
+            document.getElementById('noticeModal').style.display = 'none';
+            localStorage.setItem('notice_closed', 'true');
+        }
+        document.getElementById('openNoticeBtn').onclick = () => {
+            document.getElementById('noticeModal').style.display = 'flex';
+        };
+        document.getElementById('closeNoticeBtn').onclick = closeNotice;
+        document.getElementById('confirmNoticeBtn').onclick = closeNotice;
+
+        // ========== 加载所有数据 ==========
         async function loadGames() {
             const { data, error } = await supabase.from('games').select('*');
             if (!error) games = data || [];
@@ -739,6 +555,7 @@
             await loadPlayers();
             await loadFilters();
             await loadTasks();
+            await loadAnnouncement();
             if (isAdminUnlocked && document.getElementById('adminPanel').style.display === 'block') {
                 refreshGamesTable();
                 refreshPlayersAdminTable();
@@ -748,7 +565,7 @@
             }
         }
 
-        // ---------- 老板端渲染 ----------
+        // ========== 老板端渲染 ==========
         function renderGamesGrid() {
             const grid = document.getElementById('gamesGrid');
             if (!games.length) { grid.innerHTML = '<div>暂无游戏，请点击店长模式初始化。</div>'; return; }
@@ -831,7 +648,7 @@
         }
         function applyFiltersAndRender() { renderPlayersList(); }
 
-        // ---------- 店长模式 - 游戏管理 ----------
+        // ========== 店长模式 - 游戏管理 ==========
         function refreshGamesTable() {
             const tbody = document.querySelector('#gamesTable tbody');
             tbody.innerHTML = '';
@@ -882,7 +699,7 @@
             document.getElementById('gameDesc').value = '';
         };
 
-        // ---------- 店长模式 - 陪玩管理（修复编辑） ----------
+        // ========== 店长模式 - 陪玩管理 ==========
         function refreshPlayersAdminTable() {
             const tbody = document.querySelector('#playersAdminTable tbody');
             tbody.innerHTML = '';
@@ -957,7 +774,7 @@
             document.getElementById('pStats').value = '';
         };
 
-        // ---------- 筛选器管理 ----------
+        // ========== 筛选器管理 ==========
         function refreshFilterGameSelect() {
             const sel = document.getElementById('filterGameSelect');
             if (sel) {
@@ -967,7 +784,6 @@
         }
         function refreshFiltersList() {
             const container = document.getElementById('filtersList');
-            if (!container) return;
             container.innerHTML = '';
             for (let gameId in filters) {
                 const gameName = games.find(g=>g.id===gameId)?.name || gameId;
@@ -1000,10 +816,9 @@
             document.getElementById('filterOptions').value = '';
         };
 
-        // ---------- 委托管理（店长模式：卡片式增删改查）----------
+        // ========== 委托管理 ==========
         function renderTasksAdminCards() {
             const container = document.getElementById('tasksAdminContainer');
-            if (!container) return;
             container.innerHTML = '';
             tasks.forEach(t => {
                 const card = document.createElement('div');
@@ -1062,10 +877,9 @@
             document.getElementById('taskHiddenCode').value = '';
         };
 
-        // ---------- 老板端布告栏（散开发牌效果）----------
+        // 老板端布告栏（发牌效果）
         function renderBulletinBoard() {
             const container = document.getElementById('tasksContainer');
-            if (!container) return;
             container.innerHTML = '';
             tasks.forEach(task => {
                 const card = document.createElement('div');
@@ -1084,8 +898,6 @@
                 sortableInstance = new Sortable(container, { animation: 300, ghostClass: 'sortable-ghost' });
             }
         }
-
-        // 发牌效果：从模态框中心点弹散开
         function scatterTasks() {
             const modalRect = document.querySelector('.modal-content')?.getBoundingClientRect();
             if (!modalRect) return;
@@ -1096,10 +908,8 @@
                 const rect = card.getBoundingClientRect();
                 const startX = rect.left - centerX;
                 const startY = rect.top - centerY;
-                // 初始将所有卡片重叠到中心点
                 card.style.transition = 'none';
                 card.style.transform = `translate(${-startX}px, ${-startY}px)`;
-                // 强制重绘后触发动画
                 setTimeout(() => {
                     card.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1)';
                     card.style.transform = '';
@@ -1107,18 +917,17 @@
             });
         }
 
-        // ---------- UI 控制 ----------
+        // ========== 模态框控制 ==========
         const modal = document.getElementById('bulletinModal');
         document.getElementById('openBulletinBtn').onclick = () => {
             modal.style.display = 'flex';
             renderBulletinBoard();
-            // 等待DOM渲染完成后再执行散开动画
             setTimeout(() => { scatterTasks(); }, 100);
         };
         document.getElementById('closeBulletinBtn').onclick = () => { modal.style.display = 'none'; };
         window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 
-        // 店长模式开关
+        // ========== 店长模式开关 ==========
         function enterAdminMode() {
             const pwd = prompt('请输入店长密码：');
             if (pwd === ADMIN_PASSWORD) {
@@ -1138,7 +947,7 @@
         document.getElementById('shopOwnerBtn').onclick = enterAdminMode;
         document.getElementById('backToClientBtn').onclick = exitAdminMode;
 
-        // 两大分支切换
+        // 分支切换
         document.querySelectorAll('.branch-tab').forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.branch-tab').forEach(t => t.classList.remove('active'));
@@ -1149,7 +958,6 @@
                 if (branch === 'weituo') renderTasksAdminCards();
             };
         });
-        // 选陪系统内子标签切换
         document.querySelectorAll('.sub-tab').forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
@@ -1160,9 +968,15 @@
             };
         });
 
+        document.getElementById('saveAnnouncementBtn').onclick = async () => {
+            const newContent = document.getElementById('announcementContent').value;
+            await updateAnnouncement(newContent);
+        };
+
         function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
         await loadAllData();
+        showNoticeIfNeeded();
         exitAdminMode();
     })();
 </script>
