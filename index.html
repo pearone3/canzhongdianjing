@@ -273,7 +273,7 @@
 
 <script>
     (async function () {
-        // ========== 粒子效果 ==========
+        // 粒子效果
         const canvas = document.getElementById('particlesCanvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
@@ -307,12 +307,12 @@
             resizeCanvas(); initParticles(); drawParticles();
         }
 
-        // ========== Supabase 配置 ==========
+        // Supabase 配置
         const SUPABASE_URL = 'https://zdsdipaqfxchpinifxtb.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpkc2RpcGFxZnhjaHBpbmlmeHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDgwMDgsImV4cCI6MjA5MjUyNDAwOH0.HZ6MxcZqrC-zo9-d-rdjPmcHgpnwF2tphRWm-zPvwFs';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ========== 全局变量 ==========
+        // 全局变量
         let games = [], players = [], tasks = [], specialOffers = [], announcement = { content: '欢迎来到喰种电竞！首单半价，冠军陪玩等你来！' };
         let currentPage = 'home';
         let searchKeyword = '';
@@ -321,14 +321,14 @@
         let editingPlayerId = null, editingTaskId = null, editingSpecialId = null;
         let adminActiveTab = 'peiwangAdmin';
 
-        // ========== 数据加载 ==========
-        async function loadGames() { const { data } = await supabase.from('games').select('*'); if (data) games = data; }
-        async function loadPlayers() { const { data } = await supabase.from('players').select('*'); if (data) players = data; }
-        async function loadTasks() { const { data } = await supabase.from('tasks').select('*').eq('is_active', true); if (data) tasks = data; }
-        async function loadSpecialOffers() { const { data } = await supabase.from('special_offers').select('*').eq('is_active', true); if (data) specialOffers = data; }
-        async function loadAnnouncement() { const { data } = await supabase.from('announcement').select('content').eq('id', 1).single(); if (data) announcement = data; }
+        // 数据加载函数
+        async function loadGames() { const { data, error } = await supabase.from('games').select('*'); if (!error && data) games = data; }
+        async function loadPlayers() { const { data, error } = await supabase.from('players').select('*'); if (!error && data) players = data; }
+        async function loadTasks() { const { data, error } = await supabase.from('tasks').select('*').eq('is_active', true); if (!error && data) tasks = data; }
+        async function loadSpecialOffers() { const { data, error } = await supabase.from('special_offers').select('*').eq('is_active', true); if (!error && data) specialOffers = data; }
+        async function loadAnnouncement() { const { data, error } = await supabase.from('announcement').select('content').eq('id', 1).single(); if (data) announcement = data; }
 
-        // ========== 主页渲染（特殊单列表） ==========
+        // 主页渲染
         function renderHome() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -349,7 +349,8 @@
                     <div id="specialOffersList" class="special-offers-grid"></div>
                 </div>
             `;
-            document.getElementById('kookBanner').onclick = () => window.open('https://www.kookapp.cn/app/oauth2/authorize?id=48834&permissions=1&client_id=qD2s-HM75ksgyPs9&redirect_uri=&scope=bot', '_blank');
+            // KOOK链接请替换为你的永久邀请链接
+            document.getElementById('kookBanner').onclick = () => window.open('https://kook.vip/SABJbD', '_blank');
             document.querySelectorAll('.game-tab-btn').forEach(btn => {
                 btn.onclick = () => {
                     currentSpecialGame = btn.dataset.game;
@@ -384,7 +385,7 @@
             `).join('');
         }
 
-        // ========== 选陪大厅 ==========
+        // 选陪大厅
         function renderPeiwangHall() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -450,7 +451,7 @@
             });
         }
 
-        // ========== 委托布告栏（直接展示） ==========
+        // 委托布告栏
         function renderWeituo() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `<div class="tasks-direct" id="tasksDirectContainer"></div>`;
@@ -477,7 +478,7 @@
             });
         }
 
-        // ========== 店长模式 ==========
+        // 店长模式
         function renderAdminPage() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -703,11 +704,12 @@
             if (currentPage === 'weituo') renderTasksDirect();
         }
 
-        // 特殊单管理辅助函数（价格文本任意）
+        // 特殊单管理辅助函数（使用 price_text）
         async function renderSpecialOffersAdminList() {
             const container = document.getElementById('specialOffersAdminList');
             if (!container) return;
-            const { data } = await supabase.from('special_offers').select('*').order('sort_order');
+            const { data, error } = await supabase.from('special_offers').select('*').order('sort_order', { ascending: true });
+            if (error) { console.error(error); container.innerHTML = '<div>加载失败</div>'; return; }
             const offers = data || [];
             container.innerHTML = '';
             offers.forEach(o => {
@@ -724,13 +726,15 @@
             });
         }
         window.editSpecial = async (id) => {
-            const { data } = await supabase.from('special_offers').select('*').eq('id', id).single();
+            const { data, error } = await supabase.from('special_offers').select('*').eq('id', id).single();
             if (data) {
                 document.getElementById('specialGameSelect').value = data.game_id;
                 document.getElementById('specialTitle').value = data.title;
                 document.getElementById('specialPriceText').value = data.price_text;
                 document.getElementById('specialDesc').value = data.description || '';
                 editingSpecialId = id;
+            } else {
+                alert('编辑失败');
             }
         };
         window.deleteSpecial = async (id) => {
@@ -743,9 +747,9 @@
         };
         async function addUpdateSpecial() {
             const game_id = document.getElementById('specialGameSelect').value;
-            const title = document.getElementById('specialTitle').value;
-            const price_text = document.getElementById('specialPriceText').value;
-            const description = document.getElementById('specialDesc').value;
+            const title = document.getElementById('specialTitle').value.trim();
+            const price_text = document.getElementById('specialPriceText').value.trim();
+            const description = document.getElementById('specialDesc').value.trim();
             if (!title || !price_text) return alert('名称和价格不能为空');
             const data = { game_id, title, price_text, description, is_active: true };
             if (editingSpecialId) {
@@ -762,7 +766,7 @@
             document.getElementById('specialDesc').value = '';
         }
 
-        // ========== 页面路由 ==========
+        // 页面路由
         function switchPage(page) {
             currentPage = page;
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -783,13 +787,11 @@
             }
         }
 
-        // ========== 搜索框监听 ==========
+        // 搜索监听
         document.getElementById('globalSearch').addEventListener('input', (e) => {
             searchKeyword = e.target.value;
             if (currentPage === 'peiwang' && currentGameId) renderPlayersList();
         });
-
-        // ========== 侧边栏折叠 ==========
         document.getElementById('toggleSidebarBtn').onclick = () => {
             document.getElementById('sidebar').classList.toggle('collapsed');
             document.getElementById('mainContent').classList.toggle('expanded');
@@ -801,7 +803,7 @@
 
         function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
-        // ========== 初始化 ==========
+        // 初始化
         await loadGames();
         await loadPlayers();
         await loadTasks();
