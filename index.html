@@ -25,7 +25,7 @@
             z-index: 0;
         }
 
-        /* ===== 侧边栏（PC 固定左侧，手机顶部滑出） ===== */
+        /* ===== 侧边栏（PC固定左侧，手机左侧滑出） ===== */
         .sidebar {
             position: fixed;
             left: 0;
@@ -86,9 +86,8 @@
             background: #0b0e1a;
             color: white;
             width: 200px;
-            /* 默认显示，通过 JS 控制隐藏 */
         }
-        .search-box.hidden { display: none; }   /* 新增隐藏类 */
+        .search-box.hidden { display: none; }
         .btn {
             background: linear-gradient(135deg, #ff6a00, #ff3a00);
             border: none;
@@ -254,41 +253,29 @@
 
         /* ===== 响应式样式：手机端 ===== */
         @media (max-width: 768px) {
-            /* 侧边栏变成顶部隐藏菜单 */
             .sidebar {
-                width: 100%;
-                height: auto;
+                width: 80%;
+                height: 100%;
                 position: fixed;
-                top: 0;
                 left: 0;
-                transform: translateY(-100%);
-                border-right: none;
-                border-bottom: 1px solid #ff8c42;
-                padding: 10px 0;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                transition: transform 0.3s ease;
+                top: 0;
+                transform: translateX(-100%);
+                border-right: 1px solid #ff8c42;
+                padding: 20px 0;
+                flex-direction: column;
+                align-items: stretch;
                 background: rgba(15,20,30,0.98);
                 z-index: 200;
+                transition: transform 0.3s ease;
+                border-radius: 0;
             }
-            .sidebar.open {
-                transform: translateY(0);
-            }
-            .sidebar-item {
-                padding: 8px 16px;
-                margin: 2px 6px;
-                font-size: 0.9rem;
-            }
-            .sidebar-bottom { margin-top: 0; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-item { padding: 12px 24px; margin: 4px 12px; font-size: 1.1rem; }
+            .sidebar-bottom { margin-top: auto; }
 
-            .main-content {
-                margin-left: 0;
-                padding: 10px;
-            }
+            .main-content { margin-left: 0; padding: 10px; }
             .main-content.expanded { margin-left: 0; }
 
-            /* 顶部栏适配 */
             .topbar {
                 flex-direction: row;
                 flex-wrap: wrap;
@@ -301,7 +288,6 @@
             .search-box { width: 100%; order: 3; }
             .btn { font-size: 0.8rem; padding: 4px 12px; }
 
-            /* 卡片调整 */
             .game-card { width: 100%; max-width: 320px; padding: 20px; }
             .player-card { flex-direction: column; }
             .player-icon { width: 100%; padding: 15px 0; font-size: 2.5rem; }
@@ -309,25 +295,20 @@
             .game-tabs { gap: 8px; }
             .game-tab-btn { padding: 6px 12px; font-size: 0.9rem; }
 
-            /* 筛选器垂直 */
             .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; }
 
-            /* 店长模式单列 */
             .form-grid { grid-template-columns: 1fr; }
             .admin-container { padding: 12px; }
             .admin-tabs { gap: 4px; }
             .admin-tabs .btn { padding: 4px 10px; font-size: 0.75rem; }
 
-            /* 表格横向滚动 */
             .table-wrapper { overflow-x: auto; }
             table { min-width: 500px; }
 
-            /* 主页横幅 */
             .hero-banner { border-radius: 20px; }
             .notice-board { padding: 12px; }
             .special-price-section { padding: 12px; border-radius: 24px; }
 
-            /* 委托卡片 */
             .task-card-direct { width: 100%; max-width: 320px; }
         }
     </style>
@@ -353,7 +334,7 @@
 
 <script>
     (async function () {
-        // 粒子效果（省略，保持原样）
+        // 粒子效果
         const canvas = document.getElementById('particlesCanvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
@@ -408,14 +389,10 @@
         async function loadSpecialOffers() { const { data, error } = await supabase.from('special_offers').select('*').eq('is_active', true); if (!error && data) specialOffers = data; }
         async function loadAnnouncement() { const { data, error } = await supabase.from('announcement').select('content').eq('id', 1).single(); if (data) announcement = data; }
 
-        // 控制搜索框显示（只在选陪大厅显示）
         function updateSearchVisibility() {
             const searchBox = document.getElementById('globalSearch');
-            if (currentPage === 'peiwang') {
-                searchBox.classList.remove('hidden');
-            } else {
-                searchBox.classList.add('hidden');
-            }
+            if (currentPage === 'peiwang') searchBox.classList.remove('hidden');
+            else searchBox.classList.add('hidden');
         }
 
         // 主页渲染
@@ -489,6 +466,7 @@
             renderGamesGrid();
             updateSearchVisibility();
         }
+
         function renderGamesGrid() {
             const grid = document.getElementById('gamesGrid');
             if (!games.length) { grid.innerHTML = '<div>暂无游戏，请店长模式添加。</div>'; return; }
@@ -501,12 +479,14 @@
                 grid.appendChild(card);
             });
         }
+
         function renderFilterBar() {
             const container = document.getElementById('filterBar');
             if (!currentGameId) { container.innerHTML = ''; return; }
             container.innerHTML = `<div class="filter-group"><label>暂无高级筛选</label></div><button class="btn" id="resetFiltersBtn">重置筛选</button>`;
             document.getElementById('resetFiltersBtn').onclick = () => renderPlayersList();
         }
+
         function renderPlayersList() {
             const container = document.getElementById('playersListContainer');
             if (!currentGameId) { container.innerHTML = ''; return; }
@@ -550,6 +530,7 @@
             renderTasksDirect();
             updateSearchVisibility();
         }
+
         function renderTasksDirect() {
             const container = document.getElementById('tasksDirectContainer');
             if (!container) return;
@@ -594,6 +575,7 @@
             renderAdminContent();
             updateSearchVisibility();
         }
+
         function renderAdminContent() {
             const dynamicDiv = document.getElementById('adminDynamicContent');
             if (!dynamicDiv) return;
@@ -666,7 +648,7 @@
             }
         }
 
-        // 陪玩管理函数（无修改）
+        // 陪玩管理
         async function refreshPlayersAdminTable() {
             const tbody = document.querySelector('#playersAdminTable tbody');
             if (!tbody) return;
@@ -688,6 +670,7 @@
                 actions.innerHTML = `<button onclick="editPlayer('${p.id}')">编辑</button><button onclick="deletePlayer('${p.id}')">删除</button>`;
             });
         }
+
         window.editPlayer = (id) => {
             const p = players.find(p => p.id == id);
             if (p) {
@@ -705,6 +688,7 @@
                 editingPlayerId = id;
             }
         };
+
         window.deletePlayer = async (id) => {
             if (confirm('删除陪玩？')) {
                 await supabase.from('players').delete().eq('id', id);
@@ -714,6 +698,7 @@
                 if (currentPage === 'home') renderHome();
             }
         };
+
         async function addUpdatePlayer() {
             const nickname = document.getElementById('pNickname').value;
             const game_id = document.getElementById('pGameSelect').value;
@@ -740,7 +725,7 @@
             document.querySelectorAll('#adminDynamicContent input').forEach(i => i.value = '');
         }
 
-        // 委托管理函数（无修改）
+        // 委托管理
         async function renderTasksAdminList() {
             const container = document.getElementById('tasksAdminList');
             if (!container) return;
@@ -760,6 +745,7 @@
                 container.appendChild(div);
             });
         }
+
         window.editTask = (id) => {
             const t = tasks.find(t => t.id === id);
             if (t) {
@@ -771,6 +757,7 @@
                 editingTaskId = id;
             }
         };
+
         window.deleteTask = async (id) => {
             if (confirm('删除委托？')) {
                 await supabase.from('tasks').update({ is_active: false }).eq('id', id);
@@ -779,6 +766,7 @@
                 if (currentPage === 'weituo') renderTasksDirect();
             }
         };
+
         async function addTask() {
             const bounty = document.getElementById('taskBounty').value;
             const content = document.getElementById('taskContent').value;
@@ -798,7 +786,7 @@
             if (currentPage === 'weituo') renderTasksDirect();
         }
 
-        // 特殊单管理（无修改）
+        // 特殊单管理
         async function renderSpecialOffersAdminList() {
             const container = document.getElementById('specialOffersAdminList');
             if (!container) return;
@@ -822,6 +810,7 @@
                 container.appendChild(div);
             });
         }
+
         window.editSpecial = async (id) => {
             const { data, error } = await supabase.from('special_offers').select('*').eq('id', id).single();
             if (data) {
@@ -834,6 +823,7 @@
                 alert('编辑失败');
             }
         };
+
         window.deleteSpecial = async (id) => {
             if (confirm('删除特殊单？')) {
                 await supabase.from('special_offers').update({ is_active: false }).eq('id', id);
@@ -842,6 +832,7 @@
                 renderSpecialOffersAdminList();
             }
         };
+
         async function addUpdateSpecial() {
             const game_id = document.getElementById('specialGameSelect').value;
             const title = document.getElementById('specialTitle').value.trim();
@@ -863,7 +854,7 @@
             document.getElementById('specialDesc').value = '';
         }
 
-        // 页面路由与事件绑定
+        // 页面路由
         function switchPage(page) {
             currentPage = page;
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -884,22 +875,19 @@
             }
         }
 
-        // ===== 侧边栏切换（手机和PC共用） =====
+        // 侧边栏控制
         const toggleBtn = document.getElementById('toggleSidebarBtn');
         const sidebar = document.getElementById('sidebar');
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (window.innerWidth <= 768) {
-                // 手机端：切换 open 类
                 sidebar.classList.toggle('open');
             } else {
-                // PC端：切换 collapsed 类
                 sidebar.classList.toggle('collapsed');
                 document.getElementById('mainContent').classList.toggle('expanded');
             }
         });
 
-        // 点击页面其他地方关闭手机侧边栏
         document.addEventListener('click', function(e) {
             if (window.innerWidth <= 768) {
                 if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
@@ -908,14 +896,13 @@
             }
         });
 
-        // 监听窗口大小变化，重置侧边栏状态
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('open');
             }
         });
 
-        // 搜索框
+        // 搜索监听
         document.getElementById('globalSearch').addEventListener('input', (e) => {
             searchKeyword = e.target.value;
             if (currentPage === 'peiwang' && currentGameId) renderPlayersList();
@@ -931,6 +918,7 @@
 
         function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
+        // 初始化
         await loadGames();
         await loadPlayers();
         await loadTasks();
