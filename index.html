@@ -6,7 +6,7 @@
     <title>喰种电竞 · 管家级陪玩</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
-        /* ===== 全局重置 & 基础 ===== */
+        /* ===== 全局 ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
@@ -25,7 +25,7 @@
             z-index: 0;
         }
 
-        /* ===== 侧边栏（PC 固定左侧，手机转为顶部导航） ===== */
+        /* ===== 侧边栏（PC 固定左侧，手机顶部滑出） ===== */
         .sidebar {
             position: fixed;
             left: 0;
@@ -86,7 +86,9 @@
             background: #0b0e1a;
             color: white;
             width: 200px;
+            /* 默认显示，通过 JS 控制隐藏 */
         }
+        .search-box.hidden { display: none; }   /* 新增隐藏类 */
         .btn {
             background: linear-gradient(135deg, #ff6a00, #ff3a00);
             border: none;
@@ -268,6 +270,7 @@
                 justify-content: center;
                 transition: transform 0.3s ease;
                 background: rgba(15,20,30,0.98);
+                z-index: 200;
             }
             .sidebar.open {
                 transform: translateY(0);
@@ -287,32 +290,33 @@
 
             /* 顶部栏适配 */
             .topbar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-                padding: 10px 16px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 8px 12px;
                 border-radius: 40px;
             }
-            .title-area { font-size: 0.9rem; }
-            .search-box { width: 100%; }
-            .toggle-sidebar { align-self: flex-start; }
+            .title-area { font-size: 0.8rem; order: 1; flex: 1 1 100%; text-align: center; }
+            .toggle-sidebar { order: 0; }
+            .search-box { width: 100%; order: 3; }
+            .btn { font-size: 0.8rem; padding: 4px 12px; }
 
-            /* 游戏卡片、特殊卡片、陪玩卡片 */
-            .game-card { width: 100%; max-width: 320px; }
+            /* 卡片调整 */
+            .game-card { width: 100%; max-width: 320px; padding: 20px; }
             .player-card { flex-direction: column; }
-            .player-icon { width: 100%; padding: 20px 0; }
+            .player-icon { width: 100%; padding: 15px 0; font-size: 2.5rem; }
             .special-card { width: 100%; max-width: 300px; }
-            .game-tabs { gap: 10px; }
-            .game-tab-btn { padding: 8px 16px; font-size: 1rem; }
+            .game-tabs { gap: 8px; }
+            .game-tab-btn { padding: 6px 12px; font-size: 0.9rem; }
 
-            /* 筛选器垂直排列 */
-            .filter-bar { flex-direction: column; align-items: stretch; }
+            /* 筛选器垂直 */
+            .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; }
 
-            /* 店长模式表单单列 */
+            /* 店长模式单列 */
             .form-grid { grid-template-columns: 1fr; }
-            .admin-container { padding: 16px; }
-            .admin-tabs { gap: 6px; }
-            .admin-tabs .btn { padding: 6px 12px; font-size: 0.85rem; }
+            .admin-container { padding: 12px; }
+            .admin-tabs { gap: 4px; }
+            .admin-tabs .btn { padding: 4px 10px; font-size: 0.75rem; }
 
             /* 表格横向滚动 */
             .table-wrapper { overflow-x: auto; }
@@ -320,8 +324,8 @@
 
             /* 主页横幅 */
             .hero-banner { border-radius: 20px; }
-            .notice-board { padding: 16px; }
-            .special-price-section { padding: 16px; border-radius: 32px; }
+            .notice-board { padding: 12px; }
+            .special-price-section { padding: 12px; border-radius: 24px; }
 
             /* 委托卡片 */
             .task-card-direct { width: 100%; max-width: 320px; }
@@ -340,7 +344,7 @@
 <div class="main-content" id="mainContent">
     <div class="topbar">
         <button class="toggle-sidebar" id="toggleSidebarBtn">☰</button>
-        <div class="title-area">🍽️ 喰种电竞 · 励志成为第一家管家级的陪玩店</div>
+        <div class="title-area">🍽️ 喰种电竞 · 管家级陪玩</div>
         <input type="text" id="globalSearch" class="search-box" placeholder="搜索陪玩...">
         <button id="shopOwnerBtn" class="btn">👑 店长模式</button>
     </div>
@@ -404,7 +408,17 @@
         async function loadSpecialOffers() { const { data, error } = await supabase.from('special_offers').select('*').eq('is_active', true); if (!error && data) specialOffers = data; }
         async function loadAnnouncement() { const { data, error } = await supabase.from('announcement').select('content').eq('id', 1).single(); if (data) announcement = data; }
 
-        // 主页渲染（无修改）
+        // 控制搜索框显示（只在选陪大厅显示）
+        function updateSearchVisibility() {
+            const searchBox = document.getElementById('globalSearch');
+            if (currentPage === 'peiwang') {
+                searchBox.classList.remove('hidden');
+            } else {
+                searchBox.classList.add('hidden');
+            }
+        }
+
+        // 主页渲染
         function renderHome() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -435,6 +449,7 @@
                 };
             });
             renderSpecialContent();
+            updateSearchVisibility();
         }
 
         function renderSpecialContent() {
@@ -461,7 +476,7 @@
             `).join('');
         }
 
-        // 选陪大厅（无修改）
+        // 选陪大厅
         function renderPeiwangHall() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -472,6 +487,7 @@
                 </div>
             `;
             renderGamesGrid();
+            updateSearchVisibility();
         }
         function renderGamesGrid() {
             const grid = document.getElementById('gamesGrid');
@@ -527,11 +543,12 @@
             });
         }
 
-        // 委托布告栏（无修改）
+        // 委托布告栏
         function renderWeituo() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `<div class="tasks-direct" id="tasksDirectContainer"></div>`;
             renderTasksDirect();
+            updateSearchVisibility();
         }
         function renderTasksDirect() {
             const container = document.getElementById('tasksDirectContainer');
@@ -554,7 +571,7 @@
             });
         }
 
-        // 店长模式（无修改，但内部表单已适配响应式）
+        // 店长模式
         function renderAdminPage() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -575,6 +592,7 @@
                 };
             });
             renderAdminContent();
+            updateSearchVisibility();
         }
         function renderAdminContent() {
             const dynamicDiv = document.getElementById('adminDynamicContent');
@@ -866,17 +884,49 @@
             }
         }
 
+        // ===== 侧边栏切换（手机和PC共用） =====
+        const toggleBtn = document.getElementById('toggleSidebarBtn');
+        const sidebar = document.getElementById('sidebar');
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (window.innerWidth <= 768) {
+                // 手机端：切换 open 类
+                sidebar.classList.toggle('open');
+            } else {
+                // PC端：切换 collapsed 类
+                sidebar.classList.toggle('collapsed');
+                document.getElementById('mainContent').classList.toggle('expanded');
+            }
+        });
+
+        // 点击页面其他地方关闭手机侧边栏
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // 监听窗口大小变化，重置侧边栏状态
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // 搜索框
         document.getElementById('globalSearch').addEventListener('input', (e) => {
             searchKeyword = e.target.value;
             if (currentPage === 'peiwang' && currentGameId) renderPlayersList();
         });
-        document.getElementById('toggleSidebarBtn').onclick = () => {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-            document.getElementById('mainContent').classList.toggle('expanded');
-        };
+
         document.getElementById('shopOwnerBtn').onclick = () => switchPage('admin');
         document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.onclick = () => switchPage(item.dataset.page);
+            item.onclick = () => {
+                if (window.innerWidth <= 768) sidebar.classList.remove('open');
+                switchPage(item.dataset.page);
+            };
         });
 
         function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
