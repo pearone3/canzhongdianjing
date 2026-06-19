@@ -6,6 +6,7 @@
     <title>喰种电竞 · 管家级陪玩</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
+        /* ===== 全局重置 & 基础 ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
@@ -23,7 +24,8 @@
             pointer-events: none;
             z-index: 0;
         }
-        /* 侧边栏 */
+
+        /* ===== 侧边栏（PC 固定左侧，手机转为顶部导航） ===== */
         .sidebar {
             position: fixed;
             left: 0;
@@ -51,7 +53,7 @@
         }
         .sidebar-item:hover, .sidebar-item.active { background: #ff6a00; color: white; box-shadow: 0 0 8px #ff6a00; }
         .sidebar-bottom { margin-top: auto; }
-        /* 主内容区 */
+
         .main-content {
             margin-left: 260px;
             transition: margin-left 0.3s ease;
@@ -60,7 +62,8 @@
             z-index: 2;
         }
         .main-content.expanded { margin-left: 0; }
-        /* 顶部栏 */
+
+        /* ===== 顶部栏 ===== */
         .topbar {
             display: flex;
             align-items: center;
@@ -94,7 +97,8 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        /* 主页样式 */
+
+        /* ===== 主页卡片 ===== */
         .hero-banner { width: 100%; margin-bottom: 30px; cursor: pointer; overflow: hidden; border-radius: 40px; }
         .hero-banner img { width: 100%; display: block; transition: 0.3s; }
         .hero-banner:hover img { transform: scale(1.01); }
@@ -156,7 +160,8 @@
         .special-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(255,100,0,0.3); }
         .special-card h3 { color: #ffd966; margin-bottom: 8px; }
         .special-card .price { color: #ffb347; font-size: 1.3rem; margin: 8px 0; font-weight: bold; }
-        /* 选陪大厅样式 */
+
+        /* ===== 选陪大厅 ===== */
         .games-grid {
             display: flex;
             flex-wrap: wrap;
@@ -202,7 +207,8 @@
             flex-wrap: wrap;
             gap: 15px;
         }
-        /* 委托布告栏 */
+
+        /* ===== 委托布告栏 ===== */
         .tasks-direct {
             display: flex;
             flex-wrap: wrap;
@@ -219,7 +225,8 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             border: 1px solid #d4b48c;
         }
-        /* 店长模式 */
+
+        /* ===== 店长模式 ===== */
         .admin-container {
             background: rgba(20,24,45,0.8);
             border-radius: 48px;
@@ -242,13 +249,82 @@
         table { width: 100%; min-width: 600px; border-collapse: collapse; background: rgba(0,0,0,0.3); border-radius: 20px; }
         th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #2a2e48; }
         th { color: #ffb347; background: #13172b; }
-        @media (max-width: 700px) {
+
+        /* ===== 响应式样式：手机端 ===== */
+        @media (max-width: 768px) {
+            /* 侧边栏变成顶部隐藏菜单 */
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: fixed;
+                top: 0;
+                left: 0;
+                transform: translateY(-100%);
+                border-right: none;
+                border-bottom: 1px solid #ff8c42;
+                padding: 10px 0;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                transition: transform 0.3s ease;
+                background: rgba(15,20,30,0.98);
+            }
+            .sidebar.open {
+                transform: translateY(0);
+            }
+            .sidebar-item {
+                padding: 8px 16px;
+                margin: 2px 6px;
+                font-size: 0.9rem;
+            }
+            .sidebar-bottom { margin-top: 0; }
+
+            .main-content {
+                margin-left: 0;
+                padding: 10px;
+            }
+            .main-content.expanded { margin-left: 0; }
+
+            /* 顶部栏适配 */
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 10px 16px;
+                border-radius: 40px;
+            }
+            .title-area { font-size: 0.9rem; }
+            .search-box { width: 100%; }
+            .toggle-sidebar { align-self: flex-start; }
+
+            /* 游戏卡片、特殊卡片、陪玩卡片 */
+            .game-card { width: 100%; max-width: 320px; }
             .player-card { flex-direction: column; }
             .player-icon { width: 100%; padding: 20px 0; }
-            .main-content { margin-left: 0; }
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
+            .special-card { width: 100%; max-width: 300px; }
+            .game-tabs { gap: 10px; }
+            .game-tab-btn { padding: 8px 16px; font-size: 1rem; }
+
+            /* 筛选器垂直排列 */
+            .filter-bar { flex-direction: column; align-items: stretch; }
+
+            /* 店长模式表单单列 */
             .form-grid { grid-template-columns: 1fr; }
+            .admin-container { padding: 16px; }
+            .admin-tabs { gap: 6px; }
+            .admin-tabs .btn { padding: 6px 12px; font-size: 0.85rem; }
+
+            /* 表格横向滚动 */
+            .table-wrapper { overflow-x: auto; }
+            table { min-width: 500px; }
+
+            /* 主页横幅 */
+            .hero-banner { border-radius: 20px; }
+            .notice-board { padding: 16px; }
+            .special-price-section { padding: 16px; border-radius: 32px; }
+
+            /* 委托卡片 */
+            .task-card-direct { width: 100%; max-width: 320px; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -273,7 +349,7 @@
 
 <script>
     (async function () {
-        // 粒子效果
+        // 粒子效果（省略，保持原样）
         const canvas = document.getElementById('particlesCanvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
@@ -321,14 +397,14 @@
         let editingPlayerId = null, editingTaskId = null, editingSpecialId = null;
         let adminActiveTab = 'peiwangAdmin';
 
-        // 数据加载函数
+        // 数据加载
         async function loadGames() { const { data, error } = await supabase.from('games').select('*'); if (!error && data) games = data; }
         async function loadPlayers() { const { data, error } = await supabase.from('players').select('*'); if (!error && data) players = data; }
         async function loadTasks() { const { data, error } = await supabase.from('tasks').select('*').eq('is_active', true); if (!error && data) tasks = data; }
         async function loadSpecialOffers() { const { data, error } = await supabase.from('special_offers').select('*').eq('is_active', true); if (!error && data) specialOffers = data; }
         async function loadAnnouncement() { const { data, error } = await supabase.from('announcement').select('content').eq('id', 1).single(); if (data) announcement = data; }
 
-        // 主页渲染
+        // 主页渲染（无修改）
         function renderHome() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -349,7 +425,6 @@
                     <div id="specialOffersList" class="special-offers-grid"></div>
                 </div>
             `;
-            // KOOK链接请替换为你的永久邀请链接
             document.getElementById('kookBanner').onclick = () => window.open('https://kook.vip/SABJbD', '_blank');
             document.querySelectorAll('.game-tab-btn').forEach(btn => {
                 btn.onclick = () => {
@@ -361,6 +436,7 @@
             });
             renderSpecialContent();
         }
+
         function renderSpecialContent() {
             const bannerUrls = {
                 valorant: 'images/valorant.jpg',
@@ -385,7 +461,7 @@
             `).join('');
         }
 
-        // 选陪大厅
+        // 选陪大厅（无修改）
         function renderPeiwangHall() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -451,7 +527,7 @@
             });
         }
 
-        // 委托布告栏
+        // 委托布告栏（无修改）
         function renderWeituo() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `<div class="tasks-direct" id="tasksDirectContainer"></div>`;
@@ -478,7 +554,7 @@
             });
         }
 
-        // 店长模式
+        // 店长模式（无修改，但内部表单已适配响应式）
         function renderAdminPage() {
             const container = document.getElementById('pageContainer');
             container.innerHTML = `
@@ -572,7 +648,7 @@
             }
         }
 
-        // 陪玩管理辅助函数
+        // 陪玩管理函数（无修改）
         async function refreshPlayersAdminTable() {
             const tbody = document.querySelector('#playersAdminTable tbody');
             if (!tbody) return;
@@ -646,7 +722,7 @@
             document.querySelectorAll('#adminDynamicContent input').forEach(i => i.value = '');
         }
 
-        // 委托管理辅助函数
+        // 委托管理函数（无修改）
         async function renderTasksAdminList() {
             const container = document.getElementById('tasksAdminList');
             if (!container) return;
@@ -704,7 +780,7 @@
             if (currentPage === 'weituo') renderTasksDirect();
         }
 
-        // 特殊单管理辅助函数（使用 price_text）
+        // 特殊单管理（无修改）
         async function renderSpecialOffersAdminList() {
             const container = document.getElementById('specialOffersAdminList');
             if (!container) return;
@@ -714,7 +790,10 @@
             container.innerHTML = '';
             offers.forEach(o => {
                 const div = document.createElement('div');
-                div.style.background = '#2a2e48'; div.style.padding = '12px'; div.style.marginBottom = '10px'; div.style.borderRadius = '20px';
+                div.style.background = '#2a2e48';
+                div.style.padding = '12px';
+                div.style.marginBottom = '10px';
+                div.style.borderRadius = '20px';
                 div.innerHTML = `
                     <strong>${escapeHtml(o.title)}</strong> - ${escapeHtml(o.price_text)}<br>
                     游戏: ${games.find(g => g.id === o.game_id)?.name || o.game_id}<br>
@@ -766,7 +845,7 @@
             document.getElementById('specialDesc').value = '';
         }
 
-        // 页面路由
+        // 页面路由与事件绑定
         function switchPage(page) {
             currentPage = page;
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -787,7 +866,6 @@
             }
         }
 
-        // 搜索监听
         document.getElementById('globalSearch').addEventListener('input', (e) => {
             searchKeyword = e.target.value;
             if (currentPage === 'peiwang' && currentGameId) renderPlayersList();
@@ -803,7 +881,6 @@
 
         function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
-        // 初始化
         await loadGames();
         await loadPlayers();
         await loadTasks();
