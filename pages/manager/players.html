@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>打手管理 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/supabase-client.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'manager') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    App.renderNavbar('players');
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>👥 打手管理</h1>
+        <p>查看所有打手信息及绩效</p>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table class="data-table" id="playersTable">
+              <thead>
+                <tr>
+                  <th>昵称</th>
+                  <th>总接单</th>
+                  <th>总工时</th>
+                  <th>总收入</th>
+                  <th>注册时间</th>
+                </tr>
+              </thead>
+              <tbody id="playersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    async function loadPlayers() {
+      try {
+        const list = await App.DB.getAllPlayers();
+        const tbody = document.getElementById('playersBody');
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无打手</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(p => `
+          <tr>
+            <td>${App.Utils.escapeHtml(p.username)}</td>
+            <td>${p.total_orders || 0}</td>
+            <td>${(p.total_hours || 0).toFixed(1)}h</td>
+            <td>¥${App.Utils.formatNumber(p.total_income || 0)}</td>
+            <td>${App.Utils.formatDate(p.created_at)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载失败', 'error');
+      }
+    }
+    loadPlayers();
+  })();
+</script>
+</body>
+</html>

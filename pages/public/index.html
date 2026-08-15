@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>公共看板 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="../../assets/supabase-client.js"></script>
+  <script src="../../assets/chart-init.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+
+    // 构建顶部简易导航（不调用 renderNavbar 以免显示过多菜单）
+    const topbar = document.createElement('nav');
+    topbar.className = 'navbar';
+    topbar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="logo-dot"></div>
+        <span style="font-size:16px;font-weight:700;letter-spacing:1px;color:#e6edf3;">喰种电竞</span>
+        <span style="font-size:12px;color:var(--text-muted);">公共看板</span>
+      </div>
+      <div class="navbar-right">
+        ${user ? `
+          <span style="font-size:13px;color:var(--text-secondary);">👤 ${App.Utils.escapeHtml(user.username)}</span>
+          <button class="btn btn-outline btn-sm" onclick="window.location.href='../../${user.role === 'manager' ? 'pages/manager/dashboard.html' : 'pages/player/dashboard.html'}'">
+            返回个人面板
+          </button>
+          <button class="btn btn-outline btn-sm" id="logoutBtnPublic">退出</button>
+        ` : `
+          <a href="../../login.html" class="btn btn-primary btn-sm">登录</a>
+        `}
+      </div>
+    `;
+    document.body.appendChild(topbar);
+
+    if (user) {
+      document.getElementById('logoutBtnPublic').addEventListener('click', () => {
+        App.Auth.logout();
+        window.location.reload();
+      });
+    }
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>📊 全店数据看板</h1>
+        <p>近30天接单趋势 · 打手排行榜 · 最新公告</p>
+      </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">近30天总单量</div><div class="stat-value" id="totalOrders">-</div></div>
+        <div class="stat-card"><div class="stat-label">活跃打手</div><div class="stat-value" id="activePlayers">-</div></div>
+        <div class="stat-card"><div class="stat-label">总收益</div><div class="stat-value" id="totalIncome">-</div></div>
+        <div class="stat-card"><div class="stat-label">待审核报单</div><div class="stat-value" id="pendingReports">-</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>接单趋势</h3></div>
+          <div class="card-body"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>🏆 打手排行榜</h3></div>
+          <div class="card-body"><ul class="rank-list" id="rankList"></ul></div>
+        </div>
+      </div>
+      <div class="card section-gap">
+        <div class="card-header"><h3>📢 最新公告</h3></div>
+        <div class="card-body" id="announcementList"></div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    // 加载数据
+    async function loadData() {
+      try {
+        const reports = await App.DB.getApprovedReportsLastDays(30);
+        const players = await App.DB.getAllPlayers();
+        const announcements = await App.DB.getAnnouncements();
+
+        const totalOrders = reports.length;
+        const totalIncome = reports.reduce((sum, r) => sum + (parseFloat(r.price) || 0), 0);
+        const activePlayers = new Set(reports.map(r => r.player_id)).size;
+        const pending = (await App.DB.getAllReports({ status: 'pending' })).length;
+
+        document.getElementById('totalOrders').textContent = totalOrders;
+        document.getElementById('activePlayers').textContent = activePlayers;
+        document.getElementById('totalIncome').textContent = '¥' + App.Utils.formatNumber(totalIncome);
+        document.getElementById('pendingReports').textContent = pending;
+
+        const { labels, counts } = App.Utils.aggregateByDate(reports, 30);
+        ChartHelper.renderLine('trendChart', labels, counts, { label: '接单数' });
+
+        const rankList = document.getElementById('rankList');
+        const playerMap = {};
+        players.forEach(p => { playerMap[p.id] = p.username; });
+        const orderCount = {};
+        reports.forEach(r => { orderCount[r.player_id] = (orderCount[r.player_id] || 0) + 1; });
+        const sorted = Object.entries(orderCount).sort((a, b) => b[1] - a[1]);
+        if (sorted.length === 0) {
+          rankList.innerHTML = '<li class="empty-state">暂无数据</li>';
+        } else {
+          rankList.innerHTML = sorted.slice(0, 10).map(([id, count], idx) => `
+            <li class="rank-item">
+              <span class="rank-num">${idx + 1}</span>
+              <span class="rank-name">${App.Utils.escapeHtml(playerMap[id] || '未知')}</span>
+              <span class="rank-value">${count} 单</span>
+            </li>
+          `).join('');
+        }
+
+        const annDiv = document.getElementById('announcementList');
+        if (announcements.length === 0) {
+          annDiv.innerHTML = '<div class="empty-state">暂无公告</div>';
+        } else {
+          annDiv.innerHTML = announcements.slice(0, 5).map(a => `
+            <div class="announcement-item">
+              <div class="announcement-title">📌 ${App.Utils.escapeHtml(a.title)}</div>
+              <div class="announcement-meta">${App.Utils.formatDate(a.created_at)}</div>
+              <div class="announcement-content">${App.Utils.escapeHtml(a.content)}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('数据加载失败', 'error');
+      }
+    }
+    loadData();
+  })();
+</script>
+</body>
+</html>

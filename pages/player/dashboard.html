@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>打手仪表盘 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="../../assets/supabase-client.js"></script>
+  <script src="../../assets/chart-init.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    // 权限守卫：必须打手登录
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'player') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    // 自定义导航栏，添加“公共看板”按钮
+    const base = App.getBasePath();
+    const navHtml = `
+      <nav class="navbar">
+        <a href="../../pages/player/dashboard.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+          <div class="logo-dot"></div>
+          <span style="font-size:16px;font-weight:700;letter-spacing:1px;">喰种电竞</span>
+          <span style="font-size:12px;color:var(--text-muted);">报单系统</span>
+        </a>
+        <div class="navbar-nav">
+          <a href="../../pages/player/dashboard.html" class="active">仪表盘</a>
+          <a href="../../pages/player/report.html">提交报单</a>
+          <a href="../../pages/player/performance.html">我的绩效</a>
+          <a href="../../pages/public/index.html">公共看板</a>
+        </div>
+        <div class="navbar-right">
+          <div class="user-badge">
+            <div class="avatar">${(user.username || '?').charAt(0).toUpperCase()}</div>
+            <span>${App.Utils.escapeHtml(user.username)}</span>
+            <span class="role-tag">打手</span>
+          </div>
+          <button class="btn btn-outline btn-sm" id="logoutBtn">退出</button>
+        </div>
+      </nav>
+    `;
+    document.body.insertAdjacentHTML('afterbegin', navHtml);
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      App.Auth.logout();
+    });
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>👋 欢迎回来，${App.Utils.escapeHtml(user.username)}</h1>
+        <p>你的个人报单数据总览</p>
+      </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">近30天接单</div><div class="stat-value" id="myOrders">-</div></div>
+        <div class="stat-card"><div class="stat-label">总工时</div><div class="stat-value" id="myHours">-</div></div>
+        <div class="stat-card"><div class="stat-label">总收入</div><div class="stat-value" id="myIncome">-</div></div>
+        <div class="stat-card"><div class="stat-label">待审核</div><div class="stat-value" id="myPending">-</div></div>
+      </div>
+      <div class="card section-gap">
+        <div class="card-header"><h3>📈 你的接单趋势</h3></div>
+        <div class="card-body"><div class="chart-container"><canvas id="myTrendChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>📋 最近报单</h3></div>
+        <div class="card-body"><div id="recentReports"></div></div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    async function loadData() {
+      try {
+        const playerId = user.id;
+        const reports = await App.DB.getReportsByPlayer(playerId);
+        const approved = reports.filter(r => r.status === 'approved');
+        const pending = reports.filter(r => r.status === 'pending');
+
+        document.getElementById('myOrders').textContent = approved.length;
+        document.getElementById('myHours').textContent = approved.reduce((s, r) => s + (parseFloat(r.hours) || 0), 0).toFixed(1) + 'h';
+        document.getElementById('myIncome').textContent = '¥' + App.Utils.formatNumber(approved.reduce((s, r) => s + (parseFloat(r.price) || 0), 0));
+        document.getElementById('myPending').textContent = pending.length;
+
+        const { labels, counts } = App.Utils.aggregateByDate(approved, 30);
+        ChartHelper.renderLine('myTrendChart', labels, counts, { label: '接单数' });
+
+        const recentDiv = document.getElementById('recentReports');
+        if (reports.length === 0) {
+          recentDiv.innerHTML = '<div class="empty-state">暂无报单记录</div>';
+        } else {
+          recentDiv.innerHTML = reports.slice(0, 5).map(r => `
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);">
+              <div>
+                <strong>${App.Utils.escapeHtml(r.customer_name || '未填')}</strong>
+                <span style="color:var(--text-muted);font-size:12px;margin-left:12px;">${r.time_range || ''}</span>
+              </div>
+              <div>
+                <span class="badge ${App.Utils.statusBadgeClass(r.status)}">${App.Utils.statusText(r.status)}</span>
+                <span style="margin-left:12px;">${r.price ? '¥'+r.price : ''}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载失败', 'error');
+      }
+    }
+    loadData();
+  })();
+</script>
+</body>
+</html>

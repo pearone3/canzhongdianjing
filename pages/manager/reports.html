@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>报单管理 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/supabase-client.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'manager') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    App.renderNavbar('reports');
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>📋 报单管理</h1>
+        <p>查看、审核所有报单</p>
+      </div>
+      <div class="filter-bar">
+        <select class="form-control" id="statusFilter" style="width:auto;min-width:140px;">
+          <option value="all">全部状态</option>
+          <option value="pending">待审核</option>
+          <option value="approved">已通过</option>
+          <option value="rejected">已驳回</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="refreshBtn">刷新</button>
+      </div>
+      <div class="card">
+        <div class="card-body"><div id="reportList"></div></div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    let allReports = [];
+
+    async function loadData(statusFilter = 'all') {
+      try {
+        const filters = statusFilter === 'all' ? {} : { status: statusFilter };
+        allReports = await App.DB.getAllReports(filters);
+        renderList();
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载失败', 'error');
+      }
+    }
+
+    function renderList() {
+      const container = document.getElementById('reportList');
+      if (allReports.length === 0) {
+        container.innerHTML = '<div class="empty-state">暂无报单</div>';
+        return;
+      }
+      container.innerHTML = allReports.map(r => `
+        <div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-light);align-items:center;">
+          <div>
+            <div><strong>单号: ${r.order_number}</strong> <span style="color:var(--text-muted);font-size:12px;margin-left:12px;">${r.players?.username || '未知打手'}</span></div>
+            <div style="font-size:13px;color:var(--text-secondary);">板板: ${App.Utils.escapeHtml(r.customer_name || '未填')} · 时间: ${r.time_range || ''} · 时长: ${r.hours || 0}h · 单价: ${r.price || ''}</div>
+            <div style="font-size:12px;color:var(--text-muted);">备注: ${App.Utils.escapeHtml(r.remark || '无')}</div>
+            ${r.review_remark ? `<div style="font-size:12px;color:var(--warning);">审核备注: ${App.Utils.escapeHtml(r.review_remark)}</div>` : ''}
+          </div>
+          <div style="text-align:right;">
+            <div><span class="badge ${App.Utils.statusBadgeClass(r.status)}">${App.Utils.statusText(r.status)}</span></div>
+            <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+              ${r.status === 'pending' ? `
+                <button class="btn btn-success btn-sm" onclick="approveReport(${r.id})">通过</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectReport(${r.id})">驳回</button>
+              ` : ''}
+              <button class="btn btn-outline btn-sm" onclick="viewDetail(${r.id})">详情</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.approveReport = async (id) => {
+      const remark = prompt('审核备注（可选）：');
+      if (remark === null) return;
+      try {
+        await App.DB.reviewReport(id, 'approved', remark || '');
+        App.Utils.showToast('审核通过', 'success');
+        loadData(document.getElementById('statusFilter').value);
+      } catch (err) {
+        App.Utils.showToast(err.message, 'error');
+      }
+    };
+
+    window.rejectReport = async (id) => {
+      const remark = prompt('请填写驳回原因：');
+      if (remark === null || remark.trim() === '') {
+        App.Utils.showToast('驳回必须填写原因', 'error');
+        return;
+      }
+      try {
+        await App.DB.reviewReport(id, 'rejected', remark.trim());
+        App.Utils.showToast('已驳回', 'info');
+        loadData(document.getElementById('statusFilter').value);
+      } catch (err) {
+        App.Utils.showToast(err.message, 'error');
+      }
+    };
+
+    window.viewDetail = (id) => {
+      const report = allReports.find(r => r.id === id);
+      if (!report) return;
+      alert(`单号: ${report.order_number}\n打手: ${report.players?.username || '未知'}\n板板: ${report.customer_name || '未填'}\n时间: ${report.time_range || ''}\n时长: ${report.hours || 0}h\n单价: ${report.price || ''}\n备注: ${report.remark || '无'}\n状态: ${App.Utils.statusText(report.status)}\n审核备注: ${report.review_remark || '无'}`);
+    };
+
+    document.getElementById('statusFilter').addEventListener('change', function() {
+      loadData(this.value);
+    });
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+      loadData(document.getElementById('statusFilter').value);
+    });
+
+    loadData('all');
+  })();
+</script>
+</body>
+</html>

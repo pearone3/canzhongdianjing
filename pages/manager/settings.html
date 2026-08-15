@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>系统设置 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/supabase-client.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'manager') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    App.renderNavbar('settings');
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>⚙️ 系统设置</h1>
+        <p>管理注册密钥、管理员账号等</p>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <form id="settingsForm">
+            <div class="form-group">
+              <label>注册密钥（打手注册时需填写）</label>
+              <input type="text" class="form-control" id="registerSecret" placeholder="当前密钥" />
+              <div class="form-hint">修改后，新打手注册时必须使用新密钥</div>
+            </div>
+            <div class="form-group">
+              <label>管理员用户名</label>
+              <input type="text" class="form-control" id="adminUsername" placeholder="管理员登录用户名" />
+            </div>
+            <div class="form-group">
+              <label>管理员密码</label>
+              <input type="text" class="form-control" id="adminPassword" placeholder="管理员登录密码" />
+            </div>
+            <button type="submit" class="btn btn-primary">保存设置</button>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    async function loadSettings() {
+      try {
+        const secret = await App.DB.getRegisterSecret();
+        document.getElementById('registerSecret').value = secret;
+
+        const sb = App.supabase();
+        const { data } = await sb
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'manager_credentials')
+          .maybeSingle();
+        if (data && data.value) {
+          try {
+            const cred = JSON.parse(data.value);
+            document.getElementById('adminUsername').value = cred.username || '';
+            document.getElementById('adminPassword').value = cred.password || '';
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载设置失败', 'error');
+      }
+    }
+
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const secret = document.getElementById('registerSecret').value.trim();
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+
+      if (!secret) {
+        App.Utils.showToast('注册密钥不能为空', 'error');
+        return;
+      }
+      try {
+        await App.DB.setRegisterSecret(secret);
+
+        const sb = App.supabase();
+        const cred = { username: username || 'admin', password: password || 'admin123' };
+        const { data: exist } = await sb
+          .from('system_settings')
+          .select('key')
+          .eq('key', 'manager_credentials')
+          .maybeSingle();
+        if (exist) {
+          await sb.from('system_settings').update({ value: JSON.stringify(cred) }).eq('key', 'manager_credentials');
+        } else {
+          await sb.from('system_settings').insert([{ key: 'manager_credentials', value: JSON.stringify(cred) }]);
+        }
+        App.Utils.showToast('设置已保存', 'success');
+      } catch (err) {
+        App.Utils.showToast(err.message, 'error');
+      }
+    });
+
+    loadSettings();
+  })();
+</script>
+</body>
+</html>

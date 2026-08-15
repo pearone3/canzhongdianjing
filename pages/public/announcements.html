@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>公告列表 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/supabase-client.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (user) {
+      App.renderNavbar('public');
+    } else {
+      document.body.insertAdjacentHTML('afterbegin', `
+        <nav class="navbar">
+          <a href="../../index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+            <div class="logo-dot"></div>
+            <span style="font-size:16px;font-weight:700;letter-spacing:1px;">喰种电竞</span>
+            <span style="font-size:12px;color:var(--text-muted);">公告列表</span>
+          </a>
+          <div class="navbar-right">
+            <a href="../../login.html" class="btn btn-outline btn-sm">登录</a>
+          </div>
+        </nav>
+      `);
+    }
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>📢 全部公告</h1>
+        <p>店铺最新动态与通知</p>
+      </div>
+      <div class="card">
+        <div class="card-body" id="annList"></div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    async function loadAnnouncements() {
+      try {
+        const list = await App.DB.getAnnouncements();
+        const div = document.getElementById('annList');
+        if (list.length === 0) {
+          div.innerHTML = '<div class="empty-state">暂无公告</div>';
+          return;
+        }
+        div.innerHTML = list.map(a => `
+          <div class="announcement-item">
+            <div class="announcement-title">
+              📌 ${App.Utils.escapeHtml(a.title)}
+              <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:12px;">${App.Utils.formatDate(a.created_at)}</span>
+            </div>
+            <div class="announcement-content">${App.Utils.escapeHtml(a.content)}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载失败', 'error');
+      }
+    }
+    loadAnnouncements();
+  })();
+</script>
+</body>
+</html>

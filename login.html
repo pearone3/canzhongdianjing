@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · 喰种电竞报单系统</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-client.js"></script>
+  <style>
+    body { background: #0d1117; }
+    .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-card { width: 100%; max-width: 420px; background: #161b22; border: 1px solid #30363d; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+    .login-header { padding: 32px 32px 20px; text-align: center; border-bottom: 1px solid #21262d; }
+    .login-header .logo { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #d4a017, #8b6914); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 24px; font-weight: 800; color: #1a1a1a; }
+    .login-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #e6edf3; }
+    .login-header p { font-size: 13px; color: #6e7681; }
+    .login-tabs { display: flex; border-bottom: 1px solid #21262d; }
+    .login-tab { flex: 1; padding: 13px; text-align: center; font-size: 13.5px; font-weight: 600; color: #6e7681; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+    .login-tab.active { color: #d4a017; border-bottom-color: #d4a017; }
+    .login-body { padding: 28px 32px 32px; }
+    .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .role-option { padding: 14px; border: 1px solid #30363d; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; background: #0d1117; }
+    .role-option:hover { border-color: rgba(212,160,23,0.5); }
+    .role-option.selected { border-color: #d4a017; background: rgba(212,160,23,0.1); }
+    .role-option .role-icon { font-size: 22px; margin-bottom: 4px; }
+    .role-option .role-name { font-size: 13px; font-weight: 600; color: #e6edf3; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12.5px; font-weight: 600; color: #8b949e; margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #e6edf3; font-size: 14px; font-family: inherit; transition: border-color 0.2s; }
+    .form-control:focus { outline: none; border-color: #d4a017; box-shadow: 0 0 0 3px rgba(212,160,23,0.12); }
+    .btn-primary { width: 100%; padding: 11px; background: #d4a017; color: #1a1a1a; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 6px; }
+    .btn-primary:hover { background: #e8b82e; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .login-footer { text-align: center; padding: 14px; font-size: 12px; color: #6e7681; border-top: 1px solid #21262d; }
+    .form-error { font-size: 12.5px; color: #f85149; margin-top: 5px; display: none; }
+    .form-error.show { display: block; }
+    .switch-hint { text-align: center; font-size: 12.5px; color: #6e7681; margin-top: 14px; }
+    .switch-hint a { color: #d4a017; cursor: pointer; text-decoration: none; }
+    .hidden { display: none !important; }
+    .back-link { display: block; text-align: center; margin-top: 12px; font-size: 12px; color: #6e7681; }
+  </style>
+</head>
+<body>
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">喰</div>
+      <h1>喰种电竞 · 报单系统</h1>
+      <p>打手报单 / 店长审核 / 数据看板</p>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" data-tab="login">登录</button>
+      <button class="login-tab" data-tab="register">注册</button>
+    </div>
+
+    <div class="login-body">
+      <!-- 登录表单 -->
+      <form id="loginForm">
+        <div class="role-selector">
+          <div class="role-option selected" data-role="player">
+            <div class="role-icon">🎮</div>
+            <div class="role-name">打手登录</div>
+          </div>
+          <div class="role-option" data-role="manager">
+            <div class="role-icon">👑</div>
+            <div class="role-name">管理员登录</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>账号（昵称）</label>
+          <input type="text" class="form-control" id="loginUsername" placeholder="请输入账号" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" class="form-control" id="loginPassword" placeholder="请输入密码" autocomplete="current-password" />
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn-primary" id="loginSubmitBtn">登 录</button>
+        <p class="switch-hint">还没有账号？<a id="goRegister">立即注册</a></p>
+      </form>
+
+      <!-- 注册表单 -->
+      <form id="registerForm" class="hidden">
+        <div class="form-group">
+          <label>打手昵称</label>
+          <input type="text" class="form-control" id="regUsername" placeholder="请输入昵称" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" class="form-control" id="regPassword" placeholder="至少 6 位" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label>确认密码</label>
+          <input type="password" class="form-control" id="regPassword2" placeholder="再次输入密码" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label>注册密钥 <span style="color:#f85149;">*</span></label>
+          <input type="password" class="form-control" id="regSecret" placeholder="请向店长获取注册密钥" />
+          <div class="form-hint">注册密钥由店长提供，用于验证身份</div>
+        </div>
+        <div class="form-error" id="registerError"></div>
+        <button type="submit" class="btn-primary" id="registerSubmitBtn">注 册</button>
+        <p class="switch-hint">已有账号？<a id="goLogin">返回登录</a></p>
+        <a href="pages/public/index.html" class="back-link">← 返回公共看板</a>
+      </form>
+    </div>
+
+    <div class="login-footer">© 喰种电竞 · 内部管理系统</div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const { Auth, DB, Utils } = App;
+    let currentRole = "player";
+
+    // Tab 切换
+    const tabs = document.querySelectorAll(".login-tab");
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        const isLogin = tab.dataset.tab === "login";
+        loginForm.classList.toggle("hidden", !isLogin);
+        registerForm.classList.toggle("hidden", isLogin);
+      });
+    });
+    document.getElementById("goRegister").addEventListener("click", () => {
+      tabs[1].click();
+    });
+    document.getElementById("goLogin").addEventListener("click", () => {
+      tabs[0].click();
+    });
+
+    // 角色选择
+    document.querySelectorAll(".role-option").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        document.querySelectorAll(".role-option").forEach((o) => o.classList.remove("selected"));
+        opt.classList.add("selected");
+        currentRole = opt.dataset.role;
+      });
+    });
+
+    // 登录
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("loginUsername").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const errEl = document.getElementById("loginError");
+      const btn = document.getElementById("loginSubmitBtn");
+      errEl.classList.remove("show");
+
+      if (!username || !password) {
+        errEl.textContent = "请填写账号和密码";
+        errEl.classList.add("show");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "登录中…";
+      try {
+        let user;
+        if (currentRole === "manager") {
+          user = await DB.loginManager(username, password);
+        } else {
+          user = await DB.loginPlayer(username, password);
+        }
+        Auth.setSession(user);
+        Utils.showToast("登录成功", "success");
+        setTimeout(() => {
+          // 跳转到对应的个人主页，不再回到公共页面
+          window.location.href =
+            user.role === "manager"
+              ? "pages/manager/dashboard.html"
+              : "pages/player/dashboard.html";
+        }, 400);
+      } catch (err) {
+        errEl.textContent = err.message || "登录失败";
+        errEl.classList.add("show");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "登 录";
+      }
+    });
+
+    // 注册
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("regUsername").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const password2 = document.getElementById("regPassword2").value;
+      const secret = document.getElementById("regSecret").value.trim();
+      const errEl = document.getElementById("registerError");
+      const btn = document.getElementById("registerSubmitBtn");
+      errEl.classList.remove("show");
+
+      if (!username || !password || !secret) {
+        errEl.textContent = "请填写所有必填项";
+        errEl.classList.add("show");
+        return;
+      }
+      if (password.length < 6) {
+        errEl.textContent = "密码至少 6 位";
+        errEl.classList.add("show");
+        return;
+      }
+      if (password !== password2) {
+        errEl.textContent = "两次密码不一致";
+        errEl.classList.add("show");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "注册中…";
+      try {
+        const realSecret = await DB.getRegisterSecret();
+        if (secret !== realSecret) {
+          throw new Error("注册密钥不正确，请联系店长");
+        }
+        await DB.registerPlayer(username, password);
+        Utils.showToast("注册成功，请登录", "success");
+        document.getElementById("loginUsername").value = username;
+        tabs[0].click();
+      } catch (err) {
+        errEl.textContent = err.message || "注册失败";
+        errEl.classList.add("show");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "注 册";
+      }
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的绩效 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="../../assets/supabase-client.js"></script>
+  <script src="../../assets/chart-init.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'player') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    App.renderNavbar('performance');
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>📈 我的绩效</h1>
+        <p>查看你所有报单记录与统计数据</p>
+      </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-label">总报单数</div><div class="stat-value" id="totalOrders">-</div></div>
+        <div class="stat-card"><div class="stat-label">总工时</div><div class="stat-value" id="totalHours">-</div></div>
+        <div class="stat-card"><div class="stat-label">总收入</div><div class="stat-value" id="totalIncome">-</div></div>
+        <div class="stat-card"><div class="stat-label">已通过</div><div class="stat-value" id="approvedCount">-</div></div>
+      </div>
+      <div class="card section-gap">
+        <div class="card-header"><h3>📊 月度趋势</h3></div>
+        <div class="card-body"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 历史报单</h3>
+          <div class="filter-bar">
+            <select class="form-control" id="statusFilter" style="width:auto;min-width:120px;">
+              <option value="all">全部状态</option>
+              <option value="pending">待审核</option>
+              <option value="approved">已通过</option>
+              <option value="rejected">已驳回</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body"><div id="reportList"></div></div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    let allReports = [];
+
+    async function loadData() {
+      try {
+        const playerId = user.id;
+        allReports = await App.DB.getReportsByPlayer(playerId);
+        renderStats();
+        renderTrend();
+        renderList('all');
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载失败', 'error');
+      }
+    }
+
+    function renderStats() {
+      const total = allReports.length;
+      const approved = allReports.filter(r => r.status === 'approved');
+      const totalHours = approved.reduce((s, r) => s + (parseFloat(r.hours) || 0), 0);
+      const totalIncome = approved.reduce((s, r) => s + (parseFloat(r.price) || 0), 0);
+      document.getElementById('totalOrders').textContent = total;
+      document.getElementById('totalHours').textContent = totalHours.toFixed(1) + 'h';
+      document.getElementById('totalIncome').textContent = '¥' + App.Utils.formatNumber(totalIncome);
+      document.getElementById('approvedCount').textContent = approved.length;
+    }
+
+    function renderTrend() {
+      const approved = allReports.filter(r => r.status === 'approved');
+      const { labels, counts } = App.Utils.aggregateByDate(approved, 30);
+      ChartHelper.renderLine('trendChart', labels, counts, { label: '接单数' });
+    }
+
+    function renderList(statusFilter) {
+      const container = document.getElementById('reportList');
+      let filtered = allReports;
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(r => r.status === statusFilter);
+      }
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state">暂无报单记录</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(r => `
+        <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border-light);align-items:center;">
+          <div>
+            <div><strong>${App.Utils.escapeHtml(r.customer_name || '未填')}</strong> <span style="color:var(--text-muted);font-size:12px;margin-left:12px;">${r.time_range || ''}</span></div>
+            <div style="font-size:12px;color:var(--text-muted);">单号: ${r.order_number} · ${App.Utils.formatDateTime(r.created_at)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div><span class="badge ${App.Utils.statusBadgeClass(r.status)}">${App.Utils.statusText(r.status)}</span></div>
+            <div style="font-size:13px;color:var(--accent);">${r.price ? '¥'+r.price : ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('statusFilter').addEventListener('change', function() {
+      renderList(this.value);
+    });
+
+    loadData();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提交报单 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/supabase-client.js"></script>
+  <style>
+    .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .field-locked { background: var(--bg-tertiary); color: var(--text-muted); cursor: not-allowed; }
+  </style>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'player') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    App.renderNavbar('report');
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>📝 提交报单</h1>
+        <p>填写以下信息，提交后等待店长审核</p>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <form id="reportForm">
+            <div class="form-group">
+              <label>接单人 <span class="required">*</span></label>
+              <input type="text" class="form-control field-locked" id="playerName" value="${App.Utils.escapeHtml(user.username)}" disabled />
+              <input type="hidden" id="playerId" value="${user.id}" />
+            </div>
+            <div class="form-group">
+              <label>接单板板（老板昵称） <span class="required">*</span></label>
+              <input type="text" class="form-control" id="customerName" placeholder="请输入老板昵称" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>接单时间范围 <span class="required">*</span></label>
+                <input type="text" class="form-control" id="timeRange" placeholder="例: 13:00-17:06" required />
+                <div class="form-hint">格式：开始时间-结束时间，如 13:00-17:06</div>
+              </div>
+              <div class="form-group">
+                <label>实际游玩小时数 <span class="required">*</span></label>
+                <input type="number" class="form-control" id="hours" placeholder="例: 1.5" step="0.5" min="0" required />
+                <div class="form-hint">支持小数点，如 1.5 表示 1.5 小时</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>单价（元） <span class="required">*</span></label>
+              <input type="text" class="form-control" id="price" placeholder="例: 80 或 80元/小时（特殊单可备注）" required />
+              <div class="form-hint">可填写数字或带单位说明，如“80元/小时”</div>
+            </div>
+            <div class="form-group">
+              <label>备注</label>
+              <input type="text" class="form-control" id="remark" placeholder="默认为“无”" />
+            </div>
+            <div class="form-error" id="formError"></div>
+            <button type="submit" class="btn btn-primary" id="submitBtn">提交报单</button>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    // 表单提交
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const playerId = parseInt(document.getElementById('playerId').value);
+      const customerName = document.getElementById('customerName').value.trim();
+      const timeRange = document.getElementById('timeRange').value.trim();
+      const hours = parseFloat(document.getElementById('hours').value);
+      const price = document.getElementById('price').value.trim();
+      const remark = document.getElementById('remark').value.trim() || '无';
+      const errEl = document.getElementById('formError');
+      const btn = document.getElementById('submitBtn');
+      errEl.classList.remove('show');
+
+      if (!customerName || !timeRange || isNaN(hours) || hours <= 0 || !price) {
+        errEl.textContent = '请填写所有必填项';
+        errEl.classList.add('show');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '提交中…';
+      try {
+        await App.DB.createReport({ player_id: playerId, customer_name: customerName, time_range: timeRange, hours, price, remark });
+        App.Utils.showToast('报单提交成功，等待审核', 'success');
+        document.getElementById('customerName').value = '';
+        document.getElementById('timeRange').value = '';
+        document.getElementById('hours').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('remark').value = '';
+      } catch (err) {
+        errEl.textContent = err.message || '提交失败';
+        errEl.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '提交报单';
+      }
+    });
+  })();
+</script>
+</body>
+</html>

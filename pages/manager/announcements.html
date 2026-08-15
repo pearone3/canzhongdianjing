@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>公告管理 · 喰种电竞</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../assets/supabase-client.js"></script>
+</head>
+<body>
+<script>
+  (function () {
+    const user = App.Auth.getCurrentUser();
+    if (!user || user.role !== 'manager') {
+      window.location.href = '../../login.html';
+      return;
+    }
+    App.renderNavbar('announcements');
+
+    const container = document.createElement('div');
+    container.className = 'page-container';
+    container.innerHTML = `
+      <div class="page-header">
+        <h1>📢 公告管理</h1>
+        <p>发布、编辑、删除公告</p>
+      </div>
+      <div class="card section-gap">
+        <div class="card-body">
+          <form id="annForm">
+            <div class="form-group">
+              <label>标题 <span class="required">*</span></label>
+              <input type="text" class="form-control" id="annTitle" placeholder="公告标题" required />
+            </div>
+            <div class="form-group">
+              <label>内容 <span class="required">*</span></label>
+              <textarea class="form-control" id="annContent" rows="4" placeholder="公告内容" required></textarea>
+            </div>
+            <input type="hidden" id="annEditId" value="" />
+            <button type="submit" class="btn btn-primary" id="annSubmitBtn">发布公告</button>
+            <button type="button" class="btn btn-outline" id="annCancelBtn" style="display:none;">取消编辑</button>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>已发布公告</h3></div>
+        <div class="card-body"><div id="annList"></div></div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    let editingId = null;
+
+    async function loadAnnouncements() {
+      try {
+        const list = await App.DB.getAnnouncements();
+        const div = document.getElementById('annList');
+        if (list.length === 0) {
+          div.innerHTML = '<div class="empty-state">暂无公告</div>';
+          return;
+        }
+        div.innerHTML = list.map(a => `
+          <div class="announcement-item">
+            <div class="announcement-title">
+              ${App.Utils.escapeHtml(a.title)}
+              <span style="font-size:11px;color:var(--text-muted);font-weight:400;">${App.Utils.formatDate(a.created_at)}</span>
+              <span style="margin-left:auto;">
+                <button class="btn btn-outline btn-sm" onclick="editAnn(${a.id})">编辑</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteAnn(${a.id})">删除</button>
+              </span>
+            </div>
+            <div class="announcement-content">${App.Utils.escapeHtml(a.content)}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        App.Utils.showToast('加载失败', 'error');
+      }
+    }
+
+    window.editAnn = (id) => {
+      const item = document.querySelector(`.announcement-item button[onclick*="editAnn(${id})"]`)?.closest('.announcement-item');
+      if (!item) return;
+      const title = item.querySelector('.announcement-title').textContent.trim();
+      const content = item.querySelector('.announcement-content').textContent.trim();
+      document.getElementById('annTitle').value = title;
+      document.getElementById('annContent').value = content;
+      document.getElementById('annEditId').value = id;
+      editingId = id;
+      document.getElementById('annSubmitBtn').textContent = '更新公告';
+      document.getElementById('annCancelBtn').style.display = 'inline-block';
+    };
+
+    window.deleteAnn = async (id) => {
+      if (!confirm('确认删除此公告？')) return;
+      try {
+        await App.DB.deleteAnnouncement(id);
+        App.Utils.showToast('已删除', 'info');
+        loadAnnouncements();
+      } catch (err) {
+        App.Utils.showToast(err.message, 'error');
+      }
+    };
+
+    document.getElementById('annCancelBtn').addEventListener('click', function() {
+      document.getElementById('annTitle').value = '';
+      document.getElementById('annContent').value = '';
+      document.getElementById('annEditId').value = '';
+      editingId = null;
+      document.getElementById('annSubmitBtn').textContent = '发布公告';
+      this.style.display = 'none';
+    });
+
+    document.getElementById('annForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('annTitle').value.trim();
+      const content = document.getElementById('annContent').value.trim();
+      const errEl = document.getElementById('formError');
+      if (!title || !content) {
+        alert('请填写完整');
+        return;
+      }
+      try {
+        if (editingId) {
+          await App.DB.updateAnnouncement(editingId, title, content);
+          App.Utils.showToast('公告已更新', 'success');
+          editingId = null;
+          document.getElementById('annSubmitBtn').textContent = '发布公告';
+          document.getElementById('annCancelBtn').style.display = 'none';
+        } else {
+          await App.DB.createAnnouncement(title, content);
+          App.Utils.showToast('公告已发布', 'success');
+        }
+        document.getElementById('annTitle').value = '';
+        document.getElementById('annContent').value = '';
+        document.getElementById('annEditId').value = '';
+        loadAnnouncements();
+      } catch (err) {
+        App.Utils.showToast(err.message, 'error');
+      }
+    });
+
+    loadAnnouncements();
+  })();
+</script>
+</body>
+</html>
